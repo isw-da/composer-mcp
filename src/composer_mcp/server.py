@@ -918,6 +918,137 @@ TOOLS: list[dict[str, Any]] = [
             a.get("metric_func", "sum"),
         ),
     },
+    # --- forced filters (row-level security on sources) ---
+    {
+        "name": "composer_list_forced_filters",
+        "description": (
+            "List the source's current forcedFilters[]. Each entry binds a SID "
+            "(USER/GROUP/ACCOUNT) to a filter that is appended to every query "
+            "against the source for matching sessions."
+        ),
+        "schema": _schema({"source_id": {"type": "string"}}, ["source_id"]),
+        "handler": lambda c, a: sources.list_forced_filters(c, a["source_id"]),
+    },
+    {
+        "name": "composer_add_forced_filter",
+        "description": (
+            "Append a forced filter to a source. Build the entry inline or via "
+            "make_forced_filter() shape: {sid: {type, principal}, filter: "
+            "{field, operator, values}}. `values` may be literals or "
+            "'${User.<attr>}' to interpolate push-token attributes."
+        ),
+        "schema": _schema(
+            {
+                "source_id": {"type": "string"},
+                "sid_type": {"type": "string", "enum": ["USER", "GROUP", "ACCOUNT"]},
+                "sid_principal": {"type": "string"},
+                "field": {"type": "string"},
+                "operator": {"type": "string", "default": "EQUALS"},
+                "values": {},
+            },
+            ["source_id", "sid_type", "sid_principal", "field"],
+        ),
+        "handler": lambda c, a: sources.add_forced_filter(
+            c,
+            a["source_id"],
+            sources.make_forced_filter(
+                a["sid_type"],
+                a["sid_principal"],
+                a["field"],
+                a.get("operator", "EQUALS"),
+                a.get("values"),
+            ),
+        ),
+    },
+    {
+        "name": "composer_remove_forced_filters_for_sid",
+        "description": (
+            "Drop every forced filter scoped to a given SID. Useful when "
+            "removing a tenant or rotating a group name."
+        ),
+        "schema": _schema(
+            {
+                "source_id": {"type": "string"},
+                "sid_type": {"type": "string"},
+                "sid_principal": {"type": "string"},
+            },
+            ["source_id", "sid_type", "sid_principal"],
+        ),
+        "handler": lambda c, a: sources.remove_forced_filters_for_sid(
+            c, a["source_id"], a["sid_type"], a["sid_principal"]
+        ),
+    },
+    {
+        "name": "composer_clear_forced_filters",
+        "description": "Destructive: remove ALL forced filters from a source.",
+        "schema": _schema({"source_id": {"type": "string"}}, ["source_id"]),
+        "handler": lambda c, a: sources.clear_forced_filters(c, a["source_id"]),
+    },
+    # --- cross-warehouse introspection ---
+    {
+        "name": "composer_describe_source_joins",
+        "description": (
+            "Summarise a multi-entity source's join graph: entities, the "
+            "connection each comes from, and how they join. Tags the source "
+            "as cross-warehouse if the entities span multiple connections."
+        ),
+        "schema": _schema({"source_id": {"type": "string"}}, ["source_id"]),
+        "handler": lambda c, a: sources.describe_source_joins(c, a["source_id"]),
+    },
+    {
+        "name": "composer_validate_source_field_uniqueness",
+        "description": (
+            "Check whether every field on a multi-entity source is globally "
+            "unique. Composer requires uniqueness across entities; collisions "
+            "cause silent fallback to default content at render time. Returns "
+            "the list of colliding names with the entities they appear in."
+        ),
+        "schema": _schema({"source_id": {"type": "string"}}, ["source_id"]),
+        "handler": lambda c, a: sources.validate_source_field_uniqueness(
+            c, a["source_id"]
+        ),
+    },
+    # --- visual template introspection ---
+    {
+        "name": "composer_describe_visual_template",
+        "description": (
+            "Fetch the initial-visual template for a (source, visual type) "
+            "pair and return just the bucket names + shapes. Use when working "
+            "with a visual type the MCP doesn't have an explicit helper for, "
+            "or when verifying a Composer build hasn't shifted variable names."
+        ),
+        "schema": _schema(
+            {
+                "source_id": {"type": "string"},
+                "visual_type_id": {"type": "string"},
+            },
+            ["source_id", "visual_type_id"],
+        ),
+        "handler": lambda c, a: visuals.describe_visual_template(
+            c, a["source_id"], a["visual_type_id"]
+        ),
+    },
+    # --- pre-flight render test ---
+    {
+        "name": "composer_test_dashboard_render",
+        "description": (
+            "Pre-flight every visual on a dashboard before embedding. Walks "
+            "each widget, hits its data preview endpoint, and returns a "
+            "per-widget pass/fail report. Catches placeholder-metric bindings "
+            "(visuals look fine but show row counts not real data), deleted "
+            "sources, and missing custom metrics."
+        ),
+        "schema": _schema(
+            {
+                "dashboard_id": {"type": "string"},
+                "sample_rows": {"type": "integer", "default": 5},
+            },
+            ["dashboard_id"],
+        ),
+        "handler": lambda c, a: dashboards.test_dashboard_render(
+            c, a["dashboard_id"], a.get("sample_rows", 5)
+        ),
+    },
 ]
 
 

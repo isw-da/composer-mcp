@@ -288,6 +288,231 @@ async def delete_source(client: ComposerClient, source_id: str) -> dict:
 
 
 # ----------------------------------------------------------------------
+# Forced filters (row-level security)
+#
+# A `forcedFilter` on a source is appended to every query against that
+# source for users matching the given SID. Combined with push-token
+# `groups` or `attributes`, this gives row-level security: a partner
+# user only sees rows where partner_id matches their group claim.
+#
+# Shape (verified against UAT, Composer v25):
+#
+#   {
+#     sid: {type: 'GROUP'|'USER'|'ACCOUNT', principal: '<name>'},
+#     filter: {
+#       field: 'partner_id',
+#       operator: 'EQUALS'|'IN'|'NOT_EQUALS'|'CONTAINS',
+#       values: ['<literal>'] | '${User.<attr>}',
+#     },
+#   }
+#
+# `${User.<attr>}` interpolates the attribute the push token carried.
+# `${User.groups}` resolves to the array of groups for the session.
+# Combine with a USER-typed sid for catch-all attribute-based RLS:
+#
+#   {sid: {type: 'USER', principal: '*'},
+#    filter: {field: 'partner_id', operator: 'IN', values: '${User.partner_id}'}}
+#
+# is the canonical "everyone sees only their own partner data" pattern.
+# ----------------------------------------------------------------------
+
+
+async def list_forced_filters(client: ComposerClient, source_id: str) -> list[dict]:
+    """Return the source's current `forcedFilters` array."""
+    src = await client.get(f"/sources/{source_id}")
+    return src.get("forcedFilters") or []
+
+
+def make_forced_filter(
+    sid_type: str,
+    sid_principal: str,
+    field: str,
+    operator: str = "EQUALS",
+    values: list | str | None = None,
+) -> dict:
+    """Build a forced-filter entry of the standard shape.
+
+    `values` may be a list of literals (`['DE', 'AT', 'CH']`) or a single
+    string with attribute interpolation (`'${User.partner_id}'`).
+    """
+    return {
+        "sid": {"type": sid_type.upper(), "principal": sid_principal},
+        "filter": {
+            "field": field,
+            "operator": operator.upper(),
+            "values": values if values is not None else [],
+        },
+    }
+
+
+async def add_forced_filter(
+    client: ComposerClient, source_id: str, forced_filter: dict
+) -> dict:
+    """Append a forced filter to a source. PUT-merges against existing
+    filters — does not replace the array.
+    """
+    src = await client.get(f"/sources/{source_id}")
+    existing = src.get("forcedFilters") or []
+    existing.append(forced_filter)
+    src["forcedFilters"] = existing
+    return await client.put(f"/sources/{source_id}", src)
+
+
+async def remove_forced_filters_for_sid(
+    client: ComposerClient,
+    source_id: str,
+    sid_type: str,
+    sid_principal: str,
+) -> dict:
+    """Drop every forced filter scoped to a given SID. Useful for cleanup
+    when removing a tenant or rotating a group name.
+    """
+    src = await client.get(f"/sources/{source_id}")
+    keep = []
+    dropped = 0
+    for ff in src.get("forcedFilters") or []:
+        sid = ff.get("sid") or {}
+        if (
+            sid.get("type", "").upper() == sid_type.upper()
+            and sid.get("principal") == sid_principal
+        ):
+            dropped += 1
+        else:
+            keep.append(ff)
+    src["forcedFilters"] = keep
+    if dropped:
+        await client.put(f"/sources/{source_id}", src)
+    return {"removed": dropped, "remaining": len(keep)}
+
+
+async def clear_forced_filters(client: ComposerClient, source_id: str) -> dict:
+    """Remove ALL forced filters from a source. Destructive — back up the
+    array first via `list_forced_filters` if you want to restore."""
+    src = await client.get(f"/sources/{source_id}")
+    prev = src.get("forcedFilters") or []
+    src["forcedFilters"] = []
+    await client.put(f"/sources/{source_id}", src)
+    return {"cleared": len(prev)}
+
+
+# ----------------------------------------------------------------------
+# Cross-warehouse introspection (multi-entity sources)
+# ----------------------------------------------------------------------
+
+
+async def describe_source_joins(client: ComposerClient, source_id: str) -> dict:
+    """Summarise a source's join graph: entities, the connection each one
+    comes from, and how they join.
+
+    Returns:
+      {
+        "source": {"id", "name"},
+        "entities": [{
+          "id", "name",
+          "connectionId", "schema", "collection",
+          "fieldCount",
+        }],
+        "joins": [{
+          "type", "from": {entity, fields}, "to": {entity, fields},
+        }],
+        "warehouses": [{"connectionId", "connectionName?", "entityIds"}],
+      }
+    """
+    src = await client.get(f"/sources/{source_id}")
+    entities_in = (src.get("storage") or {}).get("dataEntities") or []
+    joins_in = (src.get("storage") or {}).get("joins") or []
+
+    entities_out = []
+    by_conn: dict[str, list[str]] = {}
+    for e in entities_in:
+        sc = e.get("singleCollection") or {}
+        conn_id = sc.get("connectionId") or e.get("connectionId")
+        entities_out.append({
+            "id": e.get("id"),
+            "name": e.get("name"),
+            "connectionId": conn_id,
+            "schema": sc.get("schema"),
+            "collection": sc.get("collection"),
+            "fieldCount": len(e.get("nativeFields") or []),
+        })
+        if conn_id:
+            by_conn.setdefault(conn_id, []).append(e.get("id"))
+
+    joins_out = []
+    for j in joins_in:
+        joins_out.append({
+            "type": j.get("type") or j.get("joinType"),
+            "from": {
+                "entity": (j.get("from") or {}).get("entityId"),
+                "fields": (j.get("from") or {}).get("fields"),
+            },
+            "to": {
+                "entity": (j.get("to") or {}).get("entityId"),
+                "fields": (j.get("to") or {}).get("fields"),
+            },
+        })
+
+    # Resolve connection names where possible
+    warehouses = []
+    for conn_id, ents in by_conn.items():
+        try:
+            conn = await client.get(f"/connections/{conn_id}")
+            conn_name = conn.get("name") or conn.get("connectionName")
+            conn_type = conn.get("type") or conn.get("connectorType")
+        except Exception:
+            conn_name, conn_type = None, None
+        warehouses.append({
+            "connectionId": conn_id,
+            "connectionName": conn_name,
+            "connectionType": conn_type,
+            "entityIds": ents,
+        })
+
+    return {
+        "source": {"id": src.get("id"), "name": src.get("name")},
+        "entities": entities_out,
+        "joins": joins_out,
+        "warehouses": warehouses,
+        "isCrossWarehouse": len(warehouses) > 1,
+    }
+
+
+async def validate_source_field_uniqueness(
+    client: ComposerClient, source_id: str
+) -> dict:
+    """Check whether every field on a multi-entity source is globally unique.
+    Composer requires globally unique field names across entities; collisions
+    cause silent fallback to default content at render time.
+
+    Returns:
+      {
+        "ok": bool,
+        "totalFields": int,
+        "collisions": [{"name": "...", "entities": ["e1", "e2"]}],
+      }
+    """
+    src = await client.get(f"/sources/{source_id}")
+    seen: dict[str, list[str]] = {}
+    for e in (src.get("storage") or {}).get("dataEntities") or []:
+        eid = e.get("id")
+        for f in e.get("nativeFields") or []:
+            name = f.get("name")
+            if not name:
+                continue
+            seen.setdefault(name, []).append(eid)
+    collisions = [
+        {"name": n, "entities": ents}
+        for n, ents in seen.items()
+        if len(ents) > 1
+    ]
+    return {
+        "ok": not collisions,
+        "totalFields": sum(len(v) for v in seen.values()),
+        "collisions": collisions,
+    }
+
+
+# ----------------------------------------------------------------------
 # Custom metrics
 # ----------------------------------------------------------------------
 

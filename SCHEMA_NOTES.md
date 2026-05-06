@@ -131,6 +131,19 @@ person doesn't burn the same hour.
   `{name: 'none'}` second entry. Removing it produces a "filter never
   loads" symptom in the rendered widget.
 
+### Less-common visual types
+
+Variable buckets and theme-level chart keys, captured for the types the
+MCP doesn't have explicit helpers for. Use `describe_visual_template()` to
+verify if a Composer build has shifted these.
+
+| Visual type   | Variable buckets                              | Theme keys                              |
+|---------------|-----------------------------------------------|-----------------------------------------|
+| ARC           | `Metric`, `Group By`                          | `Label Color`, `Label Description Color` |
+| BULLET_GAUGE  | `Metric`, `Target`, `Comparison Metric`       | `Bar Color`, `Target Color`              |
+| COMBO_CHART   | `Trend Attribute`, `Y Axis`, `Y2 Axis`, `Y3 Axis`, `Y4 Axis` | `Y2 Color`, `Y3 Color`, `Y4 Color` |
+| HISTOGRAM     | `Metric`, `Bins`, `Cumulative Line`           | `Bins Color`, `Cumulative Line Color`    |
+
 ### Things you cannot do via the v25 API
 
 * Reference lines on `LINE_AND_BARS`. The variable list is only `Y1 Color`,
@@ -159,7 +172,36 @@ build the TOP twin first, then `clone_for_dashboard()` per dashboard.
 
 * Multi-entity sources need globally unique field names. Composer rejects
   duplicates across entities. Auto-prefix with the entity short name to
-  dedupe.
+  dedupe. Use `validate_source_field_uniqueness()` after edits to catch
+  collisions before they cause silent fallback at render time.
+* `describe_source_joins()` summarises the join graph and tags the source
+  as cross-warehouse if entities span multiple connections.
+
+### Forced filters (row-level security)
+
+Forced filters are appended to every query against a source for sessions
+that match the SID. Combine with push-token `groups` or `attributes` for
+row-level security:
+
+```
+{
+  sid: {type: 'GROUP'|'USER'|'ACCOUNT', principal: '<name>'},
+  filter: {field: 'partner_id', operator: 'EQUALS'|'IN'|'NOT_EQUALS'|'CONTAINS',
+           values: ['<literal>'] OR '${User.<attr>}'},
+}
+```
+
+`${User.<attr>}` interpolates the attribute the push token carried.
+The canonical "everyone sees only their own data" pattern:
+
+```
+{sid: {type: 'USER', principal: '*'},
+ filter: {field: 'partner_id', operator: 'IN', values: '${User.partner_id}'}}
+```
+
+Wrappers in `tools/sources.py`: `list_forced_filters`, `add_forced_filter`,
+`remove_forced_filters_for_sid`, `clear_forced_filters`.
+
 * `to_native_field()` reshape between describe and create endpoints — the
   `describe` shape includes some fields the `create` endpoint rejects.
 * Cross-tenant migration is `GET /api/sources/export?ids=...` then `POST

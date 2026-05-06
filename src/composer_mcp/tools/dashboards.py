@@ -224,3 +224,79 @@ async def resize_widgets_by_visual_type(
 async def delete_dashboard(client: ComposerClient, dashboard_id: str) -> dict:
     await client.delete(f"/dashboards/{dashboard_id}")
     return {"deleted": dashboard_id}
+
+
+# ----------------------------------------------------------------------
+# Pre-flight render test
+# ----------------------------------------------------------------------
+
+
+async def test_dashboard_render(
+    client: ComposerClient,
+    dashboard_id: str,
+    sample_rows: int = 5,
+) -> dict:
+    """Pre-flight every visual on a dashboard before embedding.
+
+    Walks each widget, resolves its visual, hits the visual's data preview
+    endpoint, and returns a per-widget pass/fail report. Catches the
+    common pre-demo failures: visuals bound to a placeholder metric like
+    `calc_volume` (rendered fine but data is row counts, not sales),
+    visuals pointing at a deleted source, conditional formatting that
+    references a missing metric, etc.
+
+    Returns:
+      {
+        "dashboard": {"id", "name"},
+        "widgetCount": int,
+        "passed": int,
+        "failed": int,
+        "results": [{
+          "widgetName", "widgetId", "visualId", "visualType",
+          "ok": bool, "rowCount": int, "error?": "...",
+        }],
+      }
+    """
+    d = await client.get(f"/dashboards/{dashboard_id}")
+    results = []
+    passed = 0
+    failed = 0
+    for w in d.get("widgets") or []:
+        vid = w.get("visualId") or (w.get("content") or {}).get("visualId")
+        result: dict[str, Any] = {
+            "widgetName": w.get("name"),
+            "widgetId": w.get("id"),
+            "visualId": vid,
+        }
+        if not vid:
+            result.update({"ok": False, "error": "widget has no visualId"})
+            failed += 1
+            results.append(result)
+            continue
+        try:
+            v = await client.get(f"/visuals/{vid}")
+            result["visualType"] = v.get("type")
+            # Composer's data endpoint accepts a row limit query param.
+            data = await client.request(
+                "POST",
+                f"/visuals/{vid}/data",
+                json={"limit": sample_rows},
+            )
+            row_count = (
+                len(data.get("rows") or [])
+                if isinstance(data, dict)
+                else len(data or [])
+            )
+            result.update({"ok": True, "rowCount": row_count})
+            passed += 1
+        except Exception as e:
+            result.update({"ok": False, "error": str(e)[:300]})
+            failed += 1
+        results.append(result)
+    return {
+        "dashboard": {"id": d.get("id"), "name": d.get("name")},
+        "widgetCount": len(d.get("widgets") or []),
+        "passed": passed,
+        "failed": failed,
+        "results": results,
+    }

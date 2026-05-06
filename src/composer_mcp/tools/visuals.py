@@ -67,6 +67,55 @@ LIST_FILTER_BUCKETS = {
     "display_value": "Display Value",
 }
 
+# --------------------------------------------------------------------
+# Less-common visual types — the variable buckets and theme-level chart
+# keys. These are correct in v25; if Composer adds new variants, fall
+# back to `describe_visual_template()` to get the live shape.
+# --------------------------------------------------------------------
+
+ARC_BUCKETS = {
+    "metric": "Metric",
+    "group_by": "Group By",
+    # Theme: charts.ARC.{Label Color, Label Description Color}
+}
+
+BULLET_GAUGE_BUCKETS = {
+    "metric": "Metric",
+    "target": "Target",
+    "comparison_metric": "Comparison Metric",
+    # Theme: charts.BULLET_GAUGE.{Bar Color, Target Color}
+}
+
+COMBO_CHART_BUCKETS = {
+    "trend_attribute": "Trend Attribute",
+    "y_axis": "Y Axis",
+    "y2_axis": "Y2 Axis",
+    "y3_axis": "Y3 Axis",
+    "y4_axis": "Y4 Axis",
+    # Theme: charts.COMBO_CHART.{Y2 Color, Y3 Color, Y4 Color}
+}
+
+HISTOGRAM_BUCKETS = {
+    "metric": "Metric",
+    "bins": "Bins",
+    "cumulative_line": "Cumulative Line",
+    # Theme: charts.HISTOGRAM.{Bins Color, Cumulative Line Color}
+}
+
+# Composite map keyed by visual type, useful for `describe_visual_template`
+# fallback to a known-good bucket name set.
+KNOWN_BUCKETS_BY_TYPE: dict[str, dict[str, str]] = {
+    "KPI": KPI_BUCKETS,
+    "UBER_BARS": UBER_BARS_BUCKETS,
+    "LINE_AND_BARS": LINE_AND_BARS_BUCKETS,
+    "PIVOT_TABLE": PIVOT_BUCKETS,
+    "LIST_FILTER": LIST_FILTER_BUCKETS,
+    "ARC": ARC_BUCKETS,
+    "BULLET_GAUGE": BULLET_GAUGE_BUCKETS,
+    "COMBO_CHART": COMBO_CHART_BUCKETS,
+    "HISTOGRAM": HISTOGRAM_BUCKETS,
+}
+
 
 async def list_visuals(client: ComposerClient) -> list[dict]:
     items = await client.get_list("/visuals")
@@ -268,6 +317,53 @@ async def set_kpi_conditional_format(
     existing.append(cf)
     v["source"]["variables"]["Conditional Formatting"] = existing
     return await client.put(f"/visuals/{visual_id}", v)
+
+
+# ----------------------------------------------------------------------
+# Visual template introspection
+# ----------------------------------------------------------------------
+
+
+async def describe_visual_template(
+    client: ComposerClient,
+    source_id: str,
+    visual_type_id: str,
+) -> dict:
+    """Fetch the `initial-visual` template for a (source, visual type) pair
+    and return just the structural bits — the variable bucket names and a
+    one-line summary of each variable's expected shape.
+
+    Use this when working with a visual type the MCP doesn't have an
+    explicit helper for, or when Composer adds a new variant. The returned
+    `bucketKeys` map matches what's in `KNOWN_BUCKETS_BY_TYPE` for known
+    types; for unknown ones it's the live answer.
+    """
+    tpl = await client.get(
+        f"/sources/{source_id}/visual-types/{visual_type_id}/initial-visual"
+    )
+    variables = (tpl.get("source") or {}).get("variables") or {}
+    summary = {}
+    for k, v in variables.items():
+        if isinstance(v, list):
+            if not v:
+                summary[k] = "list (empty)"
+            elif isinstance(v[0], dict):
+                summary[k] = f"list of {sorted(v[0].keys())[:6]}"
+            else:
+                summary[k] = f"list of {type(v[0]).__name__}"
+        elif isinstance(v, dict):
+            summary[k] = f"dict ({sorted(v.keys())[:6]})"
+        else:
+            summary[k] = type(v).__name__
+    vtype = tpl.get("type")
+    return {
+        "type": vtype,
+        "visualTypeId": visual_type_id,
+        "sourceId": source_id,
+        "bucketKeys": list(variables.keys()),
+        "bucketShapes": summary,
+        "knownBuckets": KNOWN_BUCKETS_BY_TYPE.get(vtype),
+    }
 
 
 # ----------------------------------------------------------------------
