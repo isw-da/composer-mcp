@@ -38,6 +38,7 @@ from .tools import (
     connections,
     dashboards,
     discovery,
+    embed,
     reports,
     sources,
     themes,
@@ -642,6 +643,180 @@ TOOLS: list[dict[str, Any]] = [
             a["schedule"],
             a.get("format", "PDF"),
             a.get("recipients"),
+        ),
+    },
+    {
+        "name": "composer_get_dashboard_report",
+        "description": "Fetch one subscription record (recipients included).",
+        "schema": _schema(
+            {
+                "dashboard_id": {"type": "string"},
+                "report_id": {"type": "string"},
+            },
+            ["dashboard_id", "report_id"],
+        ),
+        "handler": lambda c, a: reports.get_dashboard_report(
+            c, a["dashboard_id"], a["report_id"]
+        ),
+    },
+    {
+        "name": "composer_add_report_recipients",
+        "description": (
+            "Append email recipients to a subscription. PUT-merge semantics "
+            "(de-duplicates against existing list, case-insensitive). "
+            "Default subscriptions created without recipients run the schedule "
+            "and produce a PDF that goes nowhere; use this to wire them up."
+        ),
+        "schema": _schema(
+            {
+                "dashboard_id": {"type": "string"},
+                "report_id": {"type": "string"},
+                "emails": {"type": "array", "items": {"type": "string"}},
+            },
+            ["dashboard_id", "report_id", "emails"],
+        ),
+        "handler": lambda c, a: reports.add_report_recipients(
+            c, a["dashboard_id"], a["report_id"], a["emails"]
+        ),
+    },
+    {
+        "name": "composer_remove_report_recipients",
+        "description": (
+            "Drop email recipients from a subscription. Case-insensitive. "
+            "No-op for emails not currently on the list."
+        ),
+        "schema": _schema(
+            {
+                "dashboard_id": {"type": "string"},
+                "report_id": {"type": "string"},
+                "emails": {"type": "array", "items": {"type": "string"}},
+            },
+            ["dashboard_id", "report_id", "emails"],
+        ),
+        "handler": lambda c, a: reports.remove_report_recipients(
+            c, a["dashboard_id"], a["report_id"], a["emails"]
+        ),
+    },
+    {
+        "name": "composer_update_report_schedule",
+        "description": "Replace the schedule on an existing subscription.",
+        "schema": _schema(
+            {
+                "dashboard_id": {"type": "string"},
+                "report_id": {"type": "string"},
+                "schedule": {"type": "object"},
+            },
+            ["dashboard_id", "report_id", "schedule"],
+        ),
+        "handler": lambda c, a: reports.update_report_schedule(
+            c, a["dashboard_id"], a["report_id"], a["schedule"]
+        ),
+    },
+    {
+        "name": "composer_set_report_enabled",
+        "description": (
+            "Pause or resume a subscription without deleting it. Use this in "
+            "preference to delete when you want to keep recipient lists intact."
+        ),
+        "schema": _schema(
+            {
+                "dashboard_id": {"type": "string"},
+                "report_id": {"type": "string"},
+                "enabled": {"type": "boolean"},
+            },
+            ["dashboard_id", "report_id", "enabled"],
+        ),
+        "handler": lambda c, a: reports.set_report_enabled(
+            c, a["dashboard_id"], a["report_id"], a["enabled"]
+        ),
+    },
+    {
+        "name": "composer_delete_dashboard_report",
+        "description": "Delete a subscription. Prefer set_report_enabled(False) to pause.",
+        "schema": _schema(
+            {
+                "dashboard_id": {"type": "string"},
+                "report_id": {"type": "string"},
+            },
+            ["dashboard_id", "report_id"],
+        ),
+        "handler": lambda c, a: reports.delete_dashboard_report(
+            c, a["dashboard_id"], a["report_id"]
+        ),
+    },
+    # --- embed-side helpers (parent-app orchestration) ---
+    {
+        "name": "composer_dashboard_id_for_embed",
+        "description": (
+            "Convert a dashboard id from URL form (`<accountId>_<dashId>`) to "
+            "the form the Composer Embed Manager wants (`<accountId>+<dashId>`). "
+            "Idempotent: passing the `+` form returns it unchanged."
+        ),
+        "schema": _schema({"url_id": {"type": "string"}}, ["url_id"]),
+        "handler": lambda c, a: {"embed_id": embed.dashboard_id_for_embed(a["url_id"])},
+    },
+    {
+        "name": "composer_verify_trusted_access_client",
+        "description": (
+            "Probe whether a Trusted Access client is registered AND scoped to "
+            "the target account by attempting a push-token mint. Translates the "
+            "opaque 500 'can't get authentication' (client not registered) and "
+            "400 'account does not exist' (client registered but account out of "
+            "scope) into actionable diagnostics."
+        ),
+        "schema": _schema(
+            {
+                "client_id": {"type": "string"},
+                "secret": {"type": "string"},
+                "account": {"type": "string"},
+                "probe_username": {"type": "string", "default": "tenant.viewer"},
+            },
+            ["client_id", "secret", "account"],
+        ),
+        "handler": lambda c, a: embed.verify_trusted_access_client(
+            c,
+            a["client_id"],
+            a["secret"],
+            a["account"],
+            a.get("probe_username", "tenant.viewer"),
+        ),
+    },
+    {
+        "name": "composer_make_embed_config",
+        "description": (
+            "Mint a fresh push token and assemble a ready-to-paste config for "
+            "the Composer Embed Manager shell. Returns a dict with the same "
+            "shape as the CONFIG block in embed/otto-opc-shell.html.template, "
+            "plus a `_token` field with the minted access_token + expires_in "
+            "for backend-relayed embeds. NB: the output contains the trusted-"
+            "access secret — fine for local-dev shells, do not commit."
+        ),
+        "schema": _schema(
+            {
+                "client_id": {"type": "string"},
+                "secret": {"type": "string"},
+                "account": {"type": "string"},
+                "username": {"type": "string"},
+                "dashboard_ids": {
+                    "type": "object",
+                    "additionalProperties": {"type": "string"},
+                },
+                "groups": {"type": "array", "items": {"type": "string"}},
+                "theme": {"type": "string", "default": "__platform__"},
+                "composer_api_url": {"type": "string"},
+            },
+            ["client_id", "secret", "account", "username", "dashboard_ids"],
+        ),
+        "handler": lambda c, a: embed.make_embed_config(
+            c,
+            a["client_id"],
+            a["secret"],
+            a["account"],
+            a["username"],
+            a["dashboard_ids"],
+            a.get("groups"),
+            a.get("theme", "__platform__"),
+            a.get("composer_api_url"),
         ),
     },
     # --- dashboardLayout helpers (positioning) ---

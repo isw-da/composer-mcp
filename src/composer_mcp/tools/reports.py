@@ -62,3 +62,108 @@ async def create_dashboard_report(
     if recipients:
         body["recipients"] = [{"email": r} for r in recipients]
     return await client.post(f"/dashboards/{dashboard_id}/reports", body)
+
+
+async def get_dashboard_report(
+    client: ComposerClient, dashboard_id: str, report_id: str
+) -> dict:
+    """Fetch a single subscription record (recipients included)."""
+    return await client.get(f"/dashboards/{dashboard_id}/reports/{report_id}")
+
+
+def _normalise_emails(emails: list) -> list[dict]:
+    """Composer recipients are stored as `[{email: ...}, ...]`. Accept a
+    flat list of strings or a list of dicts and normalise."""
+    out = []
+    for item in emails:
+        if isinstance(item, str):
+            out.append({"email": item})
+        elif isinstance(item, dict) and "email" in item:
+            out.append(item)
+        else:
+            raise ValueError(f"unexpected recipient shape: {item!r}")
+    return out
+
+
+async def add_report_recipients(
+    client: ComposerClient,
+    dashboard_id: str,
+    report_id: str,
+    emails: list[str],
+) -> dict:
+    """Append email recipients to a subscription. PUT semantics — fetches
+    the current report, merges new recipients (de-duplicated), PUTs back.
+
+    Without recipients a subscription still runs the schedule and produces
+    a PDF, but the PDF goes nowhere. Default behaviour after
+    `create_dashboard_report` if you didn't pass `recipients`.
+    """
+    rep = await get_dashboard_report(client, dashboard_id, report_id)
+    existing = _normalise_emails(rep.get("recipients") or [])
+    existing_set = {r["email"].lower() for r in existing}
+    for e in emails:
+        if e.lower() not in existing_set:
+            existing.append({"email": e})
+            existing_set.add(e.lower())
+    rep["recipients"] = existing
+    return await client.put(
+        f"/dashboards/{dashboard_id}/reports/{report_id}", rep
+    )
+
+
+async def remove_report_recipients(
+    client: ComposerClient,
+    dashboard_id: str,
+    report_id: str,
+    emails: list[str],
+) -> dict:
+    """Drop email recipients from a subscription. Case-insensitive match.
+    No-op for emails not currently on the list.
+    """
+    rep = await get_dashboard_report(client, dashboard_id, report_id)
+    drop = {e.lower() for e in emails}
+    rep["recipients"] = [
+        r for r in _normalise_emails(rep.get("recipients") or [])
+        if r["email"].lower() not in drop
+    ]
+    return await client.put(
+        f"/dashboards/{dashboard_id}/reports/{report_id}", rep
+    )
+
+
+async def update_report_schedule(
+    client: ComposerClient,
+    dashboard_id: str,
+    report_id: str,
+    schedule: dict,
+) -> dict:
+    """Replace the schedule on an existing subscription. `schedule` shape
+    is the same as `create_dashboard_report`."""
+    rep = await get_dashboard_report(client, dashboard_id, report_id)
+    rep["schedule"] = schedule
+    return await client.put(
+        f"/dashboards/{dashboard_id}/reports/{report_id}", rep
+    )
+
+
+async def set_report_enabled(
+    client: ComposerClient,
+    dashboard_id: str,
+    report_id: str,
+    enabled: bool,
+) -> dict:
+    """Pause or resume a subscription without deleting it."""
+    rep = await get_dashboard_report(client, dashboard_id, report_id)
+    rep["enabled"] = enabled
+    return await client.put(
+        f"/dashboards/{dashboard_id}/reports/{report_id}", rep
+    )
+
+
+async def delete_dashboard_report(
+    client: ComposerClient, dashboard_id: str, report_id: str
+) -> dict:
+    """Delete a subscription. Use `set_report_enabled(False)` instead if
+    you want to pause without losing the recipient list."""
+    await client.delete(f"/dashboards/{dashboard_id}/reports/{report_id}")
+    return {"deleted": report_id, "dashboard": dashboard_id}

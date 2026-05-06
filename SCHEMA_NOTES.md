@@ -182,6 +182,13 @@ build the TOP twin first, then `clone_for_dashboard()` per dashboard.
 * `POST` to the same path creates one. Most teams configure subscriptions
   via the UI Subscribe dialog because it also wires up email templating
   and consent.
+* Recipients are stored on the report record as `[{email: "..."}, ...]`.
+  Use `tools.reports.add_report_recipients` / `remove_report_recipients`
+  to manage them with PUT-merge semantics rather than reconstructing the
+  full record yourself. A subscription created without recipients still
+  fires its schedule and produces a PDF — the PDF just goes nowhere.
+* `set_report_enabled(False)` pauses a subscription without losing its
+  recipient list. Prefer this to `delete` when iterating on schedules.
 
 ## Embed Manager (native DOM, no iframe)
 

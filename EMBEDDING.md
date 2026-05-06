@@ -8,6 +8,35 @@ This doc captures the working pattern (verified end-to-end against UAT for
 the Otto Group "Partner Center" demo). The full reference shell lives at
 `embed/otto-opc-shell.html.template` in this repo.
 
+## TL;DR — let the MCP do it
+
+If you just want a working config block to paste into the shell:
+
+```
+composer_make_embed_config(
+  client_id="<from Symphony admin>",
+  secret="<from Symphony admin>",
+  account="Otto Group",                # literal display name
+  username="tenant.viewer",
+  dashboard_ids={
+    "snapshot":  "7d498e0c-c75c-4089-b851-b88875b89432_69fba5090b70396702ebb36e",
+    "campaigns": "7d498e0c-c75c-4089-b851-b88875b89432_69fba50a0b70396702ebb371",
+    "brands":    "7d498e0c-c75c-4089-b851-b88875b89432_69fba50a0b70396702ebb374",
+  },
+  groups=["TechWorld GmbH"],
+  theme="__platform__",
+)
+```
+
+Returns the full `CONFIG = { ... }` block plus a freshly-minted token.
+Underscore→plus dashboard-id conversion is automatic.
+
+If you're getting opaque errors at boot, run
+`composer_verify_trusted_access_client(client_id, secret, account)` first
+— it translates the 500 'can't get authentication' (client not registered)
+and 400 'account does not exist' (client out of scope) into readable
+diagnostics rather than making you guess.
+
 ## The seven-step flow
 
 ```
