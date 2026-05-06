@@ -25,6 +25,22 @@ re-reading the skill each time.
 - **Cross-tenant source migration via export/import** (the only mechanism
   Composer 25 supports for cloning a connection between tenants)
 - Trusted access tokens (push for impersonation, pull for SSO)
+- **Theme inspection** (`list_themes`, `get_theme`, `describe_theme_palette`).
+  Theme writes are gated to Symphony global admin in v25; this MCP covers the
+  read side and `EMBEDDING.md` documents the workarounds (per-visual palette
+  edits, shell CSS overrides)
+- **PDF subscriptions** (`list_dashboard_reports`, `create_dashboard_report`)
+- **Layout helpers** (`resize_widget_in_layout`,
+  `resize_widgets_by_visual_type`) for fixing widget sizing in
+  `dashboardLayout.layout` without re-fetching the full dashboard each time
+- **Visual palette helpers**: `set_uber_bars_palette` wraps the gnarly
+  `Bar Color.colorConfig.colors` shape (entries must be `{name, color}`,
+  not bare strings). `set_kpi_conditional_format` for RedYellowGreen
+  thresholding on KPI tiles
+- **Embedding reference** (`embed/otto-opc-shell.html.template` plus
+  `embed/serve_nocache.py`): a working native-DOM embedding shell with
+  hover tooltips, layout overrides, and the dev server config. Worked
+  example end-to-end against UAT; see `EMBEDDING.md`
 
 The server enforces the non-negotiable Composer quirks documented in the
 skill:
@@ -36,6 +52,14 @@ skill:
 - 2-element `path` and `params` arrays in dashboard layouts (Composer v25)
 - 32-char hex widget IDs
 - **CSRF tokens** added automatically to mutation requests on bundled Symphony
+
+For the long catalogue of v25 schema gotchas we hit (push token `account` is
+the literal display name not the slug, `Bar Color.colors` entries need
+`{name, color}` shape, `dashboardLayout.layout` is the source of truth not
+`widget.layout`, reference lines + saved views aren't exposed in v25, theme
+writes 403 for tenant admins, embed manager `theme: '<name>'` overrides
+per-visual palette, `.zd-main-header` empty rail squashes embeds, and so on),
+see `SCHEMA_NOTES.md`.
 
 ## Quick start
 

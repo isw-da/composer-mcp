@@ -140,10 +140,85 @@ def _normalise_widget(w: dict[str, Any]) -> dict[str, Any]:
 async def update_dashboard_layout(
     client: ComposerClient, dashboard_id: str, layout: list[dict]
 ) -> dict:
-    """Replace the dashboardLayout.layout grid for an existing dashboard."""
+    """Replace the dashboardLayout.layout grid for an existing dashboard.
+
+    `dashboardLayout.layout` is the SOURCE OF TRUTH for widget positioning.
+    Each widget's per-widget `layout` field (rowSpan/colSpan) is vestigial —
+    Composer reads it from layout entries shaped:
+
+        {widgetId, path: [row, col], params: [height_pct, width_pct]}
+
+    height_pct and width_pct are percentages of the dashboard, NOT grid
+    cells. A KPI tile is typically [14, 16]. A trend chart [40, 100]. A
+    LIST_FILTER above content widgets is [25-30, 100] to give it room to
+    show options without scrolling. Setting [6, 33] (the agent's mistake)
+    squashes the filter into a near-invisible strip.
+    """
     current = await get_dashboard(client, dashboard_id)
     current["dashboardLayout"]["layout"] = layout
     return await client.put(f"/dashboards/{dashboard_id}", current)
+
+
+async def resize_widget_in_layout(
+    client: ComposerClient,
+    dashboard_id: str,
+    widget_id: str,
+    height_pct: int,
+    width_pct: int,
+) -> dict:
+    """Bump a single widget's size (height %, width %) in dashboardLayout.
+
+    Common cases:
+      * Filter widget too small to show options: 30, 100
+      * KPI tile in a 6-across row: 14, 16
+      * Full-width trend chart: 40, 100
+      * Pivot in a 2-across row: 30, 50
+    """
+    d = await get_dashboard(client, dashboard_id)
+    layout = (d.get("dashboardLayout") or {}).get("layout") or []
+    found = False
+    for item in layout:
+        if item.get("widgetId") == widget_id:
+            item["params"] = [height_pct, width_pct]
+            found = True
+    if not found:
+        raise ValueError(f"widget {widget_id} not found in dashboard {dashboard_id} layout")
+    return await client.put(f"/dashboards/{dashboard_id}", d)
+
+
+async def resize_widgets_by_visual_type(
+    client: ComposerClient,
+    dashboard_id: str,
+    visual_type: str,
+    height_pct: int,
+    width_pct: int,
+    visual_type_lookup: dict[str, str] | None = None,
+) -> dict:
+    """Resize every widget on a dashboard whose backing visual matches
+    `visual_type` (e.g. `'LIST_FILTER'`, `'KPI'`, `'UBER_BARS'`).
+
+    Pass `visual_type_lookup` (a `{widget_id: visual_type}` map you already
+    have) to skip a fetch per visual. Otherwise this calls
+    `/visuals/{id}` for each widget.
+    """
+    d = await get_dashboard(client, dashboard_id)
+    if visual_type_lookup is None:
+        visual_type_lookup = {}
+        for w in d.get("widgets") or []:
+            vid = w.get("visualId") or (w.get("content") or {}).get("visualId")
+            if not vid:
+                continue
+            v = await client.get(f"/visuals/{vid}")
+            visual_type_lookup[w["id"]] = v.get("type")
+    touched = []
+    for item in (d.get("dashboardLayout") or {}).get("layout") or []:
+        if visual_type_lookup.get(item["widgetId"]) == visual_type:
+            item["params"] = [height_pct, width_pct]
+            touched.append(item["widgetId"])
+    if not touched:
+        return {"updated": 0, "note": f"no {visual_type} widgets on this dashboard"}
+    await client.put(f"/dashboards/{dashboard_id}", d)
+    return {"updated": len(touched), "widgetIds": touched}
 
 
 async def delete_dashboard(client: ComposerClient, dashboard_id: str) -> dict:

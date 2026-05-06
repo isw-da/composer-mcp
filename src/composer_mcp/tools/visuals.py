@@ -135,3 +135,151 @@ async def create_visual_pair(client: ComposerClient, visual_template: dict) -> d
 async def delete_visual(client: ComposerClient, visual_id: str) -> dict:
     await client.delete(f"/visuals/{visual_id}")
     return {"deleted": visual_id}
+
+
+# ----------------------------------------------------------------------
+# UBER_BARS palette helpers
+#
+# The `Bar Color` variable is the trickiest piece of the UBER_BARS schema.
+# Captured shape and gotchas (UAT-verified):
+#
+# * `Bar Color` MUST contain a metric entry. Setting it to `[]` returns 200
+#   on PUT but breaks the visual at render time with
+#   "Cannot read properties of undefined (reading 'value')".
+#
+# * `colorConfig.colors` is an array of `{name, color}` objects, NOT raw
+#   hex strings or `{color}`. Strings: "expected JSONObject, found String".
+#   Missing name: "required key [name] not found".
+#
+# * `colorScaleType: 'gradient'` uses the `colors` array as gradient stops.
+#   For all-bars-one-colour, supply [{name, color}] with one entry but the
+#   renderer may still produce a sequential palette unless you also set
+#   `autoColor: false` and `colorSet: 'custom'`.
+#
+# * When the embed manager passes `theme: '<name>'` at createComponent time,
+#   theme palette wins over per-visual palette. Pass `'__platform__'` (or
+#   omit) if you want these per-visual edits to take effect in the embed.
+# ----------------------------------------------------------------------
+
+
+def make_bar_color_palette(
+    metric_name: str,
+    metric_func: str = "sum",
+    colors: list[str] | None = None,
+    auto_color: bool = False,
+    scale_type: str = "gradient",
+) -> list[dict]:
+    """Build a `Bar Color` variable value with a custom palette.
+
+    `colors` is a plain list of hex strings (e.g. `['#FCE2E5', '#E2001A',
+    '#A00012']`) — this helper wraps each into the `{name, color}` shape
+    Composer requires.
+    """
+    palette = colors or ["#E2001A"]
+    return [
+        {
+            "name": metric_name,
+            "func": metric_func,
+            "colorConfig": {
+                "colorNumb": max(3, len(palette)),
+                "legendType": "palette",
+                "colors": [{"name": f"c{i}", "color": c} for i, c in enumerate(palette)],
+                "colorSet": "custom",
+                "autoShowColorLegend": False,
+                "separateNegativeColor": False,
+                "autoColor": auto_color,
+                "colorScaleType": scale_type,
+            },
+        }
+    ]
+
+
+async def set_uber_bars_palette(
+    client: ComposerClient,
+    visual_id: str,
+    metric_name: str,
+    colors: list[str],
+    metric_func: str = "sum",
+    scale_type: str = "gradient",
+) -> dict:
+    """Replace an UBER_BARS visual's Bar Color palette with the given hex stops.
+
+    Pass 1 colour for a solid look (still gradient-rendered, but uniform).
+    Pass 2-3 colours for a brand-aligned ramp (e.g. light pink → red → dark
+    red for revenue bars, or red → amber → green for ROAS).
+    """
+    v = await client.get(f"/visuals/{visual_id}")
+    v["source"]["variables"]["Bar Color"] = make_bar_color_palette(
+        metric_name, metric_func, colors, auto_color=False, scale_type=scale_type
+    )
+    return await client.put(f"/visuals/{visual_id}", v)
+
+
+# ----------------------------------------------------------------------
+# KPI conditional formatting
+# ----------------------------------------------------------------------
+
+
+async def set_kpi_conditional_format(
+    client: ComposerClient,
+    visual_id: str,
+    metric_name: str,
+    palette: str = "RedYellowGreen",
+    thresholds: list[float] | None = None,
+    target: str = "metric",
+    metric_func: str = "sum",
+) -> dict:
+    """Apply a conditional-formatting palette to a KPI visual.
+
+    `palette`: a Composer-known palette name. RedYellowGreen is the only
+    one that ships universally; tenants may add custom ones.
+    `thresholds`: gradient breakpoints between palette colours. For ROAS
+    targeting 2.5×, use `[1.0, 2.0]` (red below 1, yellow 1-2, green above).
+    `target`: which part of the KPI tile gets coloured: `'metric'` (the
+    big number, default) or `'label'` (the title).
+    """
+    if thresholds is None:
+        thresholds = [1.0, 2.0]
+    cf = {
+        "type": "palette",
+        "condition": {
+            "type": "metric",
+            "metric": {"name": metric_name, "func": metric_func},
+        },
+        "applyTo": {"type": "namedTargets", "targets": [target]},
+        "format": {
+            "type": "palette",
+            "palette": palette,
+            "mode": "gradient",
+            "colorNum": 3,
+            "thresholds": thresholds,
+        },
+    }
+    v = await client.get(f"/visuals/{visual_id}")
+    existing = v.get("source", {}).get("variables", {}).get("Conditional Formatting", [])
+    # Replace any existing CF on this metric+target, otherwise append
+    existing = [
+        e for e in existing
+        if not (
+            (e.get("condition") or {}).get("metric", {}).get("name") == metric_name
+            and target in (e.get("applyTo") or {}).get("targets", [])
+        )
+    ]
+    existing.append(cf)
+    v["source"]["variables"]["Conditional Formatting"] = existing
+    return await client.put(f"/visuals/{visual_id}", v)
+
+
+# ----------------------------------------------------------------------
+# Variable shape NOT supported in the v25 build we tested
+# ----------------------------------------------------------------------
+#
+# Reference lines on `LINE_AND_BARS` cannot be set via API. The visual's
+# `source.variables` keys are exactly: `Y1 Color`, `Y1 Axis`, `Y2 Color`,
+# `Y2 Axis`, `Formatting`, `Trend Attribute`. There is no `Reference Line`
+# or `Annotations` variable. Composer's UI lets you draw them; the API
+# does not (yet) round-trip them.
+#
+# Saved views / bookmarks return 404 on every reasonable endpoint we
+# probed (`/dashboards/{id}/views`, `/bookmarks`, `/states`,
+# `/personalizations`, `/views?dashboardId=`). Not exposed in v25.

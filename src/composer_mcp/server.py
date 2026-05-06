@@ -33,7 +33,17 @@ from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
 from .client import ComposerClient, ComposerConfig, ComposerError
-from .tools import accounts, connections, dashboards, discovery, sources, tokens, visuals
+from .tools import (
+    accounts,
+    connections,
+    dashboards,
+    discovery,
+    reports,
+    sources,
+    themes,
+    tokens,
+    visuals,
+)
 
 
 # ----------------------------- tool registry -----------------------------
@@ -531,12 +541,16 @@ TOOLS: list[dict[str, Any]] = [
         "name": "composer_mint_push_token",
         "description": (
             "Mint a push token impersonating a user. Used for embedded scenarios "
-            "and for UC4 'replicate partner view' troubleshooting."
+            "and for UC4 'replicate partner view' troubleshooting. `account` is "
+            "the literal tenant display name including spaces (e.g. 'Otto Group'), "
+            "NOT the slug or UUID. `groups` is the field the renderer uses for "
+            "forced-filter scoping."
         ),
         "schema": _schema(
             {
                 "username": {"type": "string"},
                 "account": {"type": "string"},
+                "groups": {"type": "array", "items": {"type": "string"}},
                 "roles": {"type": "array", "items": {"type": "string"}},
                 "attributes": {
                     "type": "object",
@@ -552,7 +566,8 @@ TOOLS: list[dict[str, Any]] = [
             c,
             a["username"],
             a["account"],
-            a.get("roles", ["viewer"]),
+            a.get("groups"),
+            a.get("roles"),
             a.get("attributes"),
         ),
     },
@@ -564,6 +579,169 @@ TOOLS: list[dict[str, Any]] = [
             ["username", "account"],
         ),
         "handler": lambda c, a: tokens.mint_pull_token(c, a["username"], a["account"]),
+    },
+    # --- themes (read-only; write is gated to Symphony global admin) ---
+    {
+        "name": "composer_list_themes",
+        "description": (
+            "List themes available in the current tenant context. System themes "
+            "have stable ids ('modern', 'composer', 'dark', 'd+a_light', "
+            "'__platform__'); custom themes have ObjectId-format ids."
+        ),
+        "schema": _schema({}),
+        "handler": lambda c, a: themes.list_themes(c),
+    },
+    {
+        "name": "composer_get_theme",
+        "description": "Fetch a theme record including the full `content` blob.",
+        "schema": _schema({"theme_id": {"type": "string"}}, ["theme_id"]),
+        "handler": lambda c, a: themes.get_theme(c, a["theme_id"]),
+    },
+    {
+        "name": "composer_describe_theme_palette",
+        "description": (
+            "Pull just the palette-driving subset of a theme: colors, "
+            "colorPalette, customProperties.charts. Use to audit how charts "
+            "will be coloured before embedding a dashboard."
+        ),
+        "schema": _schema({"theme_id": {"type": "string"}}, ["theme_id"]),
+        "handler": lambda c, a: themes.describe_theme_palette(c, a["theme_id"]),
+    },
+    # --- reports (PDF subscriptions) ---
+    {
+        "name": "composer_list_dashboard_reports",
+        "description": (
+            "List scheduled PDF subscriptions configured on a dashboard. "
+            "Each entry returns name, schedule (frequency/dayOfWeek/dayOfMonth/"
+            "timeOfDay/startDate/endDate), format, and enabled flag."
+        ),
+        "schema": _schema({"dashboard_id": {"type": "string"}}, ["dashboard_id"]),
+        "handler": lambda c, a: reports.list_dashboard_reports(c, a["dashboard_id"]),
+    },
+    {
+        "name": "composer_create_dashboard_report",
+        "description": (
+            "Create a scheduled PDF subscription on a dashboard. `schedule` is "
+            "{frequency: DAILY|WEEKLY|MONTHLY, dayOfWeek?, dayOfMonth?, "
+            "timeOfDay, startDate, endDate}. `recipients` is a list of emails."
+        ),
+        "schema": _schema(
+            {
+                "dashboard_id": {"type": "string"},
+                "name": {"type": "string"},
+                "schedule": {"type": "object"},
+                "format": {"type": "string", "default": "PDF"},
+                "recipients": {"type": "array", "items": {"type": "string"}},
+            },
+            ["dashboard_id", "name", "schedule"],
+        ),
+        "handler": lambda c, a: reports.create_dashboard_report(
+            c,
+            a["dashboard_id"],
+            a["name"],
+            a["schedule"],
+            a.get("format", "PDF"),
+            a.get("recipients"),
+        ),
+    },
+    # --- dashboardLayout helpers (positioning) ---
+    {
+        "name": "composer_resize_widget_in_layout",
+        "description": (
+            "Resize a single widget in dashboardLayout. height_pct and width_pct "
+            "are percentages of dashboard size, NOT grid cells. Filter widgets "
+            "need ~30 height to show options without scrolling; KPI tiles ~14; "
+            "trend charts ~40."
+        ),
+        "schema": _schema(
+            {
+                "dashboard_id": {"type": "string"},
+                "widget_id": {"type": "string"},
+                "height_pct": {"type": "integer"},
+                "width_pct": {"type": "integer"},
+            },
+            ["dashboard_id", "widget_id", "height_pct", "width_pct"],
+        ),
+        "handler": lambda c, a: dashboards.resize_widget_in_layout(
+            c, a["dashboard_id"], a["widget_id"], a["height_pct"], a["width_pct"]
+        ),
+    },
+    {
+        "name": "composer_resize_widgets_by_visual_type",
+        "description": (
+            "Resize every widget on a dashboard whose visual matches the given "
+            "type (e.g. LIST_FILTER, KPI, UBER_BARS, PIVOT_TABLE)."
+        ),
+        "schema": _schema(
+            {
+                "dashboard_id": {"type": "string"},
+                "visual_type": {"type": "string"},
+                "height_pct": {"type": "integer"},
+                "width_pct": {"type": "integer"},
+            },
+            ["dashboard_id", "visual_type", "height_pct", "width_pct"],
+        ),
+        "handler": lambda c, a: dashboards.resize_widgets_by_visual_type(
+            c, a["dashboard_id"], a["visual_type"], a["height_pct"], a["width_pct"]
+        ),
+    },
+    # --- visual palette / conditional formatting helpers ---
+    {
+        "name": "composer_set_uber_bars_palette",
+        "description": (
+            "Replace an UBER_BARS visual's Bar Color palette. Pass a list of "
+            "hex colours; this helper wraps each into the {name, color} shape "
+            "Composer requires (raw strings or {color} alone return 400). "
+            "NB: when the embed manager passes theme: '<custom>' the theme "
+            "palette wins over per-visual settings; pass '__platform__' to let "
+            "these edits actually paint."
+        ),
+        "schema": _schema(
+            {
+                "visual_id": {"type": "string"},
+                "metric_name": {"type": "string"},
+                "colors": {"type": "array", "items": {"type": "string"}},
+                "metric_func": {"type": "string", "default": "sum"},
+                "scale_type": {"type": "string", "default": "gradient"},
+            },
+            ["visual_id", "metric_name", "colors"],
+        ),
+        "handler": lambda c, a: visuals.set_uber_bars_palette(
+            c,
+            a["visual_id"],
+            a["metric_name"],
+            a["colors"],
+            a.get("metric_func", "sum"),
+            a.get("scale_type", "gradient"),
+        ),
+    },
+    {
+        "name": "composer_set_kpi_conditional_format",
+        "description": (
+            "Apply conditional formatting (palette + thresholds) to a KPI "
+            "visual's metric or label. Default RedYellowGreen with thresholds "
+            "[1.0, 2.0] is the right default for ROAS-style metrics."
+        ),
+        "schema": _schema(
+            {
+                "visual_id": {"type": "string"},
+                "metric_name": {"type": "string"},
+                "palette": {"type": "string", "default": "RedYellowGreen"},
+                "thresholds": {"type": "array", "items": {"type": "number"}},
+                "target": {"type": "string", "default": "metric"},
+                "metric_func": {"type": "string", "default": "sum"},
+            },
+            ["visual_id", "metric_name"],
+        ),
+        "handler": lambda c, a: visuals.set_kpi_conditional_format(
+            c,
+            a["visual_id"],
+            a["metric_name"],
+            a.get("palette", "RedYellowGreen"),
+            a.get("thresholds"),
+            a.get("target", "metric"),
+            a.get("metric_func", "sum"),
+        ),
     },
 ]
 
