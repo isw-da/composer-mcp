@@ -1,19 +1,30 @@
 """
-Composer API client — handles the vendor media type, base path, auth, and
-the wrapped-list response shape that the symphony-dashboard-builder-skill
+Composer API client — handles the vendor media type, base path, auth, CSRF,
+and the wrapped-list response shape that the symphony-dashboard-builder-skill
 documents as the most common gotchas.
 
-Auth model:
-  - Basic Auth (admin:password) is used for routine GET/POST as a development
-    fallback.
-  - For production embedding we'd mint a Bearer token via the
-    /api/trusted-access/push/tokens endpoint and use that. Bearer support is
-    in here but most tools default to Basic against a local instance.
+Auth model (three flavours, in order of preference for unattended scripting):
+
+  1. **Bearer token** (`COMPOSER_BEARER`): mint via /api/trusted-access/pull/tokens
+     or /api/trusted-access/push/tokens. Stateless, works on both standalone
+     and bundled Symphony, no CSRF needed. Recommended for production.
+
+  2. **Basic Auth** (`COMPOSER_USER` + `COMPOSER_PASSWORD`): works on standalone
+     Composer (mounted at /composer). On bundled Symphony (/discovery) Basic Auth
+     against the v3 API is typically rejected as 401. Use only for local dev.
+
+  3. **Session cookie + CSRF token** (`COMPOSER_SESSION_COOKIE` +
+     `COMPOSER_CSRF_TOKEN`): bundled Symphony enforces Spring Security CSRF.
+     Read the SESSION cookie value and the `<meta name="_csrf">` value from a
+     logged-in browser tab and pass them via env vars. State-changing requests
+     (POST/PUT/DELETE/PATCH) get the CSRF header automatically.
 
 Key invariants enforced here:
   - Content-Type and Accept are always application/vnd.composer.v3+json.
-  - Base path is always {host}/discovery/api/...
+  - Base path is `{host}{context_path}/api/...` where context_path is
+    `/composer` (standalone) or `/discovery` (SI/Symphony bundle).
   - List responses are unwrapped from {content: [...]} when present.
+  - X-CSRF-TOKEN is added to mutation requests when the env var is set.
 """
 
 from __future__ import annotations
@@ -34,29 +45,49 @@ class ComposerError(RuntimeError):
         self.body = body
 
 
+_MUTATING_METHODS = {"POST", "PUT", "DELETE", "PATCH"}
+
+
 @dataclass(frozen=True)
 class ComposerConfig:
-    base_url: str        # e.g. http://localhost:18080
-    context_path: str    # e.g. /composer (standalone) or /discovery (SI bundle)
-    user: str            # e.g. admin
-    password: str        # admin password
-    bearer: str | None = None  # if set, used instead of Basic
+    base_url: str                 # e.g. http://localhost:18080
+    context_path: str             # /composer (standalone) or /discovery (SI/Symphony bundle)
+    user: str                     # e.g. admin
+    password: str                 # admin password
+    bearer: str | None = None     # if set, used instead of Basic
+    session_cookie: str | None = None  # Spring Security SESSION cookie value (bundled Symphony)
+    csrf_token: str | None = None      # Spring Security CSRF token (bundled Symphony)
 
     @classmethod
     def from_env(cls) -> "ComposerConfig":
         base = os.environ.get("COMPOSER_BASE", "http://localhost:18080")
-        # Standalone Composer mounts at /composer; SI-bundled Composer at /discovery.
+        # Standalone Composer mounts at /composer; SI/Symphony-bundled Composer at /discovery.
         context = os.environ.get("COMPOSER_CONTEXT_PATH", "/composer")
         user = os.environ.get("COMPOSER_USER", "admin")
         password = os.environ.get("COMPOSER_PASSWORD", "")
         bearer = os.environ.get("COMPOSER_BEARER")
-        if not password and not bearer:
+        session_cookie = os.environ.get("COMPOSER_SESSION_COOKIE")
+        csrf_token = os.environ.get("COMPOSER_CSRF_TOKEN")
+        if not password and not bearer and not session_cookie:
             raise RuntimeError(
-                "Set COMPOSER_PASSWORD (or COMPOSER_BEARER) before starting the server"
+                "Set one of: COMPOSER_PASSWORD, COMPOSER_BEARER, "
+                "or COMPOSER_SESSION_COOKIE (+ COMPOSER_CSRF_TOKEN for bundled Symphony) "
+                "before starting the server"
             )
+        if session_cookie and not csrf_token:
+            # Not a hard error: GETs work without it. Mutations will 403 until CSRF is set.
+            pass
         if not context.startswith("/"):
             context = "/" + context
-        return cls(base.rstrip("/"), context.rstrip("/"), user, password, bearer)
+        return cls(
+            base.rstrip("/"),
+            context.rstrip("/"),
+            user,
+            password,
+            bearer,
+            session_cookie,
+            csrf_token,
+        )
 
 
 class ComposerClient:
@@ -68,15 +99,22 @@ class ComposerClient:
             "Accept": VENDOR_MEDIA_TYPE,
             "Content-Type": VENDOR_MEDIA_TYPE,
         }
+        cookies: dict[str, str] = {}
+        auth = None
         if cfg.bearer:
             headers["Authorization"] = f"Bearer {cfg.bearer}"
-            auth = None
+        elif cfg.session_cookie:
+            # Bundled Symphony login flow: Spring Security session cookie.
+            # SESSION is the canonical cookie name on /discovery; /managed
+            # may set additional cookies, but SESSION is what /api/* honours.
+            cookies["SESSION"] = cfg.session_cookie
         else:
             auth = (cfg.user, cfg.password)
         self._client = httpx.AsyncClient(
             base_url=cfg.base_url + cfg.context_path,
             headers=headers,
             auth=auth,
+            cookies=cookies or None,
             timeout=httpx.Timeout(60.0),
             follow_redirects=False,
         )
@@ -93,12 +131,29 @@ class ComposerClient:
                     return data[key]
         return data
 
+    def _mutation_headers(self, method: str) -> dict[str, str]:
+        """Return any per-request headers that depend on the HTTP method.
+
+        Bundled Symphony (Spring Security) requires `X-CSRF-TOKEN` on every
+        state-changing request. Without it, the API returns 403 with the
+        misleading message "Your user session has expired. Please refresh
+        the page to get a new user session established before changes can
+        be saved." That's not a session expiry — it's the CSRF gate.
+        """
+        headers: dict[str, str] = {}
+        if method.upper() in _MUTATING_METHODS and self.cfg.csrf_token:
+            headers["X-CSRF-TOKEN"] = self.cfg.csrf_token
+        return headers
+
     async def request(
         self, method: str, path: str, json: Any | None = None, params: dict | None = None
     ) -> Any:
         path = path if path.startswith("/") else "/" + path
         path = path if path.startswith("/api") else "/api" + path
-        resp = await self._client.request(method, path, json=json, params=params)
+        extra_headers = self._mutation_headers(method)
+        resp = await self._client.request(
+            method, path, json=json, params=params, headers=extra_headers or None
+        )
         if resp.status_code >= 400:
             try:
                 body = resp.json()
@@ -120,11 +175,11 @@ class ComposerClient:
     async def get_list(self, path: str, **kw) -> list[Any]:
         return self._unwrap(await self.get(path, **kw))
 
-    async def post(self, path: str, json: Any) -> Any:
-        return await self.request("POST", path, json=json)
+    async def post(self, path: str, json: Any | None = None, params: dict | None = None) -> Any:
+        return await self.request("POST", path, json=json, params=params)
 
-    async def put(self, path: str, json: Any) -> Any:
-        return await self.request("PUT", path, json=json)
+    async def put(self, path: str, json: Any | None = None, params: dict | None = None) -> Any:
+        return await self.request("PUT", path, json=json, params=params)
 
     async def delete(self, path: str) -> Any:
         return await self.request("DELETE", path)

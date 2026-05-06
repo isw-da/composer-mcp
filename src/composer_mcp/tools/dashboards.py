@@ -3,6 +3,21 @@
 Dashboards are containers of widgets. Each widget binds to a visualId and
 positions it in a grid. The dashboard layout uses 2-element path/params
 arrays in Composer v25 (NOT 4-element).
+
+Field links — the mechanism that scopes a filter widget's selection across
+all consumer widgets — use the `FieldLinkResource` shape:
+    {label: "Campaign Type",
+     mappings: [{sourceId: "...", fieldName: "campaign_type"}]}
+NOT `{name, fields}` as some older docs imply. See `make_field_link`.
+
+Time scope — to override the per-visual default 7-day window so all widgets
+share a synchronised window, set each visual's `controlsCfg.timeControlCfg`
+to `{from, to, timeField}`. Special tokens:
+    +$start_of_data, +$end_of_data
+    +$end_of_data_-1_week, +$end_of_data_-1_month, etc.
+There's also a dashboard-level `unifiedBarCfgs` that sets up a shared time
+slider — but it must be added via PUT after create (passing it on POST
+triggers HV000028 Hibernate validation).
 """
 
 from __future__ import annotations
@@ -16,6 +31,20 @@ from ..client import ComposerClient
 def widget_id() -> str:
     """Generate a 32-char hex widget ID matching Composer's expected format."""
     return secrets.token_hex(16)
+
+
+def make_field_link(label: str, source_id: str, field_name: str) -> dict:
+    """Build the `FieldLinkResource` shape for a single field link.
+
+    A dashboard's `fieldLinks` is a list of these. Each describes one named
+    cross-widget filter dimension (e.g. "Campaign Type") and which source
+    field carries it. When a filter widget changes its selection, every
+    consumer widget that has the same source field is rescoped automatically.
+    """
+    return {
+        "label": label,
+        "mappings": [{"sourceId": source_id, "fieldName": field_name}],
+    }
 
 
 async def list_dashboards(client: ComposerClient) -> list[dict]:

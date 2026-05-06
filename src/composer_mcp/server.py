@@ -184,6 +184,141 @@ TOOLS: list[dict[str, Any]] = [
         "schema": _schema({"source_id": {"type": "string"}}, ["source_id"]),
         "handler": lambda c, a: sources.delete_source(c, a["source_id"]),
     },
+    {
+        "name": "composer_create_source_v2",
+        "description": (
+            "Create a multi-entity source with full body control (joins, "
+            "cross-warehouse entities, custom nativeFields). Use this when "
+            "composer_create_source's single-table form isn't enough. "
+            "See README for the SourceResource shape and gotchas around "
+            "field-name collisions and cross-warehouse joins."
+        ),
+        "schema": _schema({"body": {"type": "object"}}, ["body"]),
+        "handler": lambda c, a: sources.create_source_v2(c, a["body"]),
+    },
+    {
+        "name": "composer_update_source",
+        "description": (
+            "Replace an existing source's full body (PUT). Useful for adding "
+            "an entity + join to an existing source in place — preserves "
+            "the source id so visuals already bound to it keep working."
+        ),
+        "schema": _schema(
+            {"source_id": {"type": "string"}, "body": {"type": "object"}},
+            ["source_id", "body"],
+        ),
+        "handler": lambda c, a: sources.update_source(c, a["source_id"], a["body"]),
+    },
+    {
+        "name": "composer_describe_entity",
+        "description": (
+            "Probe a single SINGLE_COLLECTION entity for its native fields. "
+            "Returns the flat describe shape; pass each field through "
+            "to_native_field() before embedding into a v2 source body."
+        ),
+        "schema": _schema(
+            {
+                "connection_id": {"type": "string"},
+                "schema": {"type": "string"},
+                "collection": {"type": "string"},
+            },
+            ["connection_id", "schema", "collection"],
+        ),
+        "handler": lambda c, a: sources.describe_entity(
+            c, a["connection_id"], a["schema"], a["collection"]
+        ),
+    },
+    # --- custom metrics ---
+    {
+        "name": "composer_list_custom_metrics",
+        "description": "List custom (calculated) metrics on a source.",
+        "schema": _schema({"source_id": {"type": "string"}}, ["source_id"]),
+        "handler": lambda c, a: sources.list_custom_metrics(c, a["source_id"]),
+    },
+    {
+        "name": "composer_add_custom_metric",
+        "description": (
+            "Add a calculated metric to a source. `expression` is in "
+            "Composer's expression syntax (SUM, AVG, COUNT, CASE WHEN, "
+            "COALESCE, +-*/, ROUND etc; NULLIF is NOT supported). "
+            "`number_format` may be a NumberFormatResource dict or a preset "
+            "key: 'EUR', 'USD', 'GBP', 'PERCENT', 'RATIO', 'INTEGER'. "
+            "For divide-by-zero safety wrap with: "
+            "CASE WHEN denom > 0 THEN num / denom ELSE 0 END."
+        ),
+        "schema": _schema(
+            {
+                "source_id": {"type": "string"},
+                "name": {"type": "string"},
+                "label": {"type": "string"},
+                "expression": {"type": "string"},
+                "number_format": {
+                    "description": "Either a literal NumberFormatResource dict or a preset name.",
+                },
+                "visible": {"type": "boolean", "default": True},
+            },
+            ["source_id", "name", "label", "expression"],
+        ),
+        "handler": lambda c, a: sources.add_custom_metric(
+            c,
+            a["source_id"],
+            a["name"],
+            a["label"],
+            a["expression"],
+            a.get("number_format"),
+            a.get("visible", True),
+        ),
+    },
+    {
+        "name": "composer_delete_custom_metric",
+        "description": "Delete a custom metric by name from a source.",
+        "schema": _schema(
+            {"source_id": {"type": "string"}, "name": {"type": "string"}},
+            ["source_id", "name"],
+        ),
+        "handler": lambda c, a: sources.delete_custom_metric(c, a["source_id"], a["name"]),
+    },
+    # --- cross-tenant migration (export/import) ---
+    {
+        "name": "composer_export_sources",
+        "description": (
+            "Export sources (with their referenced connections, encrypted "
+            "passwords preserved) as a portable JSON payload. Pair with "
+            "composer_import_sources(account_id=...) to clone into a "
+            "different tenant on the SAME Composer instance. This is the "
+            "official cross-tenant migration mechanism — Composer 25 has no "
+            "UI to share connection instances directly."
+        ),
+        "schema": _schema(
+            {"source_ids": {"type": "array", "items": {"type": "string"}}},
+            ["source_ids"],
+        ),
+        "handler": lambda c, a: sources.export_sources(c, a["source_ids"]),
+    },
+    {
+        "name": "composer_import_sources",
+        "description": (
+            "Import a previously-exported source bundle. Pass account_id to "
+            "target a different tenant (the cross-tenant migration path). "
+            "Composer auto-recreates referenced connections."
+        ),
+        "schema": _schema(
+            {
+                "payload": {"type": "object"},
+                "account_id": {"type": "string"},
+                "suppress_warnings": {"type": "boolean", "default": True},
+                "enable_default_read": {"type": "boolean", "default": True},
+            },
+            ["payload"],
+        ),
+        "handler": lambda c, a: sources.import_sources(
+            c,
+            a["payload"],
+            a.get("account_id"),
+            a.get("suppress_warnings", True),
+            a.get("enable_default_read", True),
+        ),
+    },
     # --- visuals ---
     {
         "name": "composer_list_visuals",
@@ -296,9 +431,82 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "composer_create_account",
-        "description": "Create a tenant account.",
-        "schema": _schema({"name": {"type": "string"}}, ["name"]),
-        "handler": lambda c, a: accounts.create_account(c, a["name"]),
+        "description": (
+            "Create a tenant. The body is the AccountUserResource shape: "
+            "`{account: {name, disabled}, users: []}`. You can pre-attach "
+            "existing users in the same call by passing them; otherwise add "
+            "them later via composer_add_users_to_account."
+        ),
+        "schema": _schema(
+            {
+                "name": {"type": "string"},
+                "users": {
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": "Optional list of {id, name} users to attach at create time.",
+                },
+            },
+            ["name"],
+        ),
+        "handler": lambda c, a: accounts.create_account(c, a["name"], a.get("users")),
+    },
+    {
+        "name": "composer_get_account_users",
+        "description": "List users currently in a tenant.",
+        "schema": _schema({"account_id": {"type": "string"}}, ["account_id"]),
+        "handler": lambda c, a: accounts.get_account_users(c, a["account_id"]),
+    },
+    {
+        "name": "composer_get_account_admins",
+        "description": "List admins of a tenant.",
+        "schema": _schema({"account_id": {"type": "string"}}, ["account_id"]),
+        "handler": lambda c, a: accounts.get_account_admins(c, a["account_id"]),
+    },
+    {
+        "name": "composer_add_users_to_account",
+        "description": (
+            "Replace a tenant's user list (PUT). `users` is a flat array of "
+            "{id, name}. PUT REPLACES — fetch the existing list first and "
+            "append, otherwise everyone except the passed users gets evicted. "
+            "Cross-tenant adds (importing a user from a different tenant) "
+            "require Symphony Global Administrator; per-tenant admins can "
+            "only add users already in their own tenant."
+        ),
+        "schema": _schema(
+            {
+                "account_id": {"type": "string"},
+                "users": {"type": "array", "items": {"type": "object"}},
+            },
+            ["account_id", "users"],
+        ),
+        "handler": lambda c, a: accounts.add_users_to_account(c, a["account_id"], a["users"]),
+    },
+    {
+        "name": "composer_add_admins_to_account",
+        "description": (
+            "Replace a tenant's admin list (PUT). Each user must already be "
+            "a member; otherwise this returns 400 'doesn't belong to account'. "
+            "Same PUT-replace semantics as composer_add_users_to_account."
+        ),
+        "schema": _schema(
+            {
+                "account_id": {"type": "string"},
+                "users": {"type": "array", "items": {"type": "object"}},
+            },
+            ["account_id", "users"],
+        ),
+        "handler": lambda c, a: accounts.add_admins_to_account(c, a["account_id"], a["users"]),
+    },
+    {
+        "name": "composer_switch_tenant",
+        "description": (
+            "Switch the active tenant context for the current session. After "
+            "switching, all subsequent /api/* calls run in the target tenant's "
+            "scope (its sources, dashboards, connections). Returns 400 if the "
+            "calling user is not a member of the target tenant."
+        ),
+        "schema": _schema({"account_id": {"type": "string"}}, ["account_id"]),
+        "handler": lambda c, a: accounts.switch_tenant(c, a["account_id"]),
     },
     {
         "name": "composer_share_dashboard",

@@ -3,11 +3,69 @@
 Visuals are charts/widgets that reference a source and a set of fields.
 Each visual can only belong to ONE dashboard — the API rejects sharing a
 visual across dashboards with "visuals already used in other dashboards".
+Use `create_visual_pair()` to build a TOP-level twin (Visual Gallery) and
+an IN_DASHBOARD twin (for embedding) from the same template.
+
+UAT-side variable shape constraints (real failures observed, fix in this
+shape OR Composer 400s with "extraneous key not permitted"):
+
+* **KPI** (`Metric`, `Comparison Metric`): `{name, func}` only. Adding
+  `label` is rejected.
+
+* **UBER_BARS** (`Multi Group By` sort): `{name, dir, label, type:'METRIC'}`.
+  Adding `func: 'sum'` here is rejected even though metric-typed sort logically
+  needs an aggregator. Composer infers it from the `Metric` variable.
+
+* **PIVOT_TABLE** buckets are `Row Attributes`, `Column Attributes`, `Metrics`
+  — NOT `Rows`, `Columns`, `Metric`. Setting the wrong bucket names is
+  silently accepted on POST but the visual renders with default content
+  (often `partner_segment` rows in our case) instead of your config.
+
+* **LINE_AND_BARS** has `Trend Attribute` (a list whose first element is the
+  X-axis attribute) and `Y Axis` (a list of metric variables).
+
+* **LIST_FILTER** has `Display Value` with TWO entries: the field to filter
+  on, then a `{name: 'none'}` placeholder. See `composer_create_visual_pair`.
+
+When in doubt: GET `/sources/{id}/visual-types/{vtId}/initial-visual` and
+print `tpl.source.variables` keys before editing.
 """
 
 from __future__ import annotations
 
 from ..client import ComposerClient
+
+
+# --------------------------------------------------------------------
+# Bucket name reference — what each visual type's `source.variables`
+# keys are called. Captured to save a round trip every time.
+# --------------------------------------------------------------------
+
+PIVOT_BUCKETS = {
+    "rows": "Row Attributes",
+    "columns": "Column Attributes",
+    "metrics": "Metrics",
+}
+
+KPI_BUCKETS = {
+    "metric": "Metric",
+    "comparison_metric": "Comparison Metric",
+}
+
+UBER_BARS_BUCKETS = {
+    "group": "Multi Group By",
+    "metric": "Metric",
+    "bar_color": "Bar Color",
+}
+
+LINE_AND_BARS_BUCKETS = {
+    "trend_attribute": "Trend Attribute",
+    "y_axis": "Y Axis",
+}
+
+LIST_FILTER_BUCKETS = {
+    "display_value": "Display Value",
+}
 
 
 async def list_visuals(client: ComposerClient) -> list[dict]:
