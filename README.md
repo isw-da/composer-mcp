@@ -91,6 +91,21 @@ The smoke test runs `composer_introspect` against the configured instance.
 | Accounts | `composer_list_accounts`, `composer_create_account`, `composer_share_dashboard` |
 | Tokens | `composer_mint_push_token`, `composer_mint_pull_token` |
 
+## See also
+
+Other Logi Symphony / Simba Intelligence developer toolkit components in the
+same org:
+
+- [`isw-da/symphony-dashboard-builder-skill`](https://github.com/isw-da/symphony-dashboard-builder-skill)
+  — the procedural skill this MCP is built on. Useful as a reference when the
+  MCP doesn't cover an edge case.
+- [`isw-da/simba-intelligence-skill`](https://github.com/isw-da/simba-intelligence-skill)
+  — Claude skill for installing, configuring, and troubleshooting Simba
+  Intelligence on Kubernetes.
+- [`isw-da/edc-graphql`](https://github.com/isw-da/edc-graphql) — Java
+  Enterprise Data Connector that lets Composer / Simba Intelligence query
+  any GraphQL API.
+
 `composer_create_visual_pair` builds two copies of the same template at
 once: a `TOP`-level visual visible in the Visual Gallery for browsing or
 editing standalone, plus an `IN_DASHBOARD`-level twin ready to embed in a
