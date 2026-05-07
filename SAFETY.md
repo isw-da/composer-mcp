@@ -127,6 +127,71 @@ force a clean re-push. This requires a session whose user is in
 "System Administrators" — if the bootstrap `admin` user's password is
 known, that's the safest credential to use for the migrate call.
 
+### The `preserveGroups` trick (added later 2026-05-07)
+
+When you must mint push tokens for a privileged user (because the
+embedded resources only render with that user's role bag), include
+the user's role-bearing VDD groups in EVERY push body. Composer
+overwrites the user's group memberships on each push, so the body
+must always carry the full set you want to keep.
+
+In the Otto-OPC shell:
+
+```js
+const CONFIG = {
+  sharedUsername: 'amin.hasan',
+  preserveGroups: ['Administrators', 'Supervisors', 'Content Distributors'],
+  // ...
+};
+
+async function getPushToken() {
+  const groups = [...(CONFIG.preserveGroups || [])];
+  if (CONFIG.group) groups.push(CONFIG.group);  // forced-filter group
+  const body = { username: CONFIG.sharedUsername, account: CONFIG.account, groups };
+  // POST as before
+}
+```
+
+Real role-bearing group names (which the system recognises as
+memberships) and arbitrary forced-filter strings can sit in the same
+`groups` array. Real ones grant memberships; unknown strings act as
+forced-filter scopes.
+
+### Importing connections with their encrypted password
+
+Composer doesn't expose passwords on `GET /api/connections/{id}` —
+the JSON omits the encrypted blob. So a connection POSTed by reading
++ stripping + posting will land in the destination tenant with no
+password. Workaround: use the source export bundle which DOES carry
+the encrypted blob.
+
+```bash
+# Export a source from the source tenant; the dependency walk pulls
+# the connection record with its encrypted password attached.
+curl ... "/api/sources/export?ids={sourceId}"   # GET, returns JSON
+
+# Import in the destination tenant. Composer dedupes connections by
+# JDBC URL + USER_NAME (not by name), so to force a fresh CREATE in the
+# destination you can bump the URL with a throwaway query param,
+# import, then PUT to remove the bump and rename. Names with `(suffix)`
+# alone do NOT force creation; only differing URL/USER does.
+curl -X POST ... "/api/sources/import" -d @bundle.json
+```
+
+### Custom metrics live on a sub-endpoint
+
+The standard `GET /api/sources/{id}` does NOT include custom
+calculated metrics (ROAS, conversion_rate, etc). Read them via:
+
+```
+GET  /api/sources/{id}/custom-metrics
+POST /api/sources/{id}/custom-metrics  (create one)
+```
+
+If you migrate sources without copying these, visuals that reference
+calculated metrics render an "access denied / select new values"
+error because the metric reference can't resolve.
+
 ### The recipe that worked on 2026-05-07
 
 ```bash
