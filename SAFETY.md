@@ -75,6 +75,20 @@ I should have generalised that lesson to push tokens.
   to use it.
 - Module docstring leads with the danger.
 
+### `client.py` (added in v0.5.1, after Trevor's bootstrap-admin recovery)
+
+- `_enforce_guards()` runs on every request. Two hard rules:
+  1. **MDR endpoints are blocked.** Any path starting with `/managed`
+     raises `MdrEndpointBlocked`. composer-mcp is VDD-only by policy.
+     If you need MDR, do it manually outside this codebase with an
+     explicit one-shot session — never via automation.
+  2. **Self-mutation by user id is blocked.** PUT/PATCH/DELETE on
+     `/api/users/{me}` raises `SelfUserMutationBlocked`. This is the
+     direct write path that complements the push-token guard in
+     `tokens.py`.
+- The running user's id is fetched once via GET /api/user on first
+  request and cached on the client instance.
+
 ### Anywhere else with PUT-replace or POST-overwrite semantics
 
 - `accounts.py` `add_users_to_account` / `add_admins_to_account`:

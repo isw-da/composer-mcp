@@ -47,6 +47,40 @@ class ComposerError(RuntimeError):
 
 _MUTATING_METHODS = {"POST", "PUT", "DELETE", "PATCH"}
 
+# Hard guardrails added 2026-05-07 after locking amin.hasan out of UAT
+# by mutating his own user record via the trusted-access push token. See
+# SAFETY.md at the repo root for the full incident.
+
+# 1) Refuse to mutate /api/users/{id} when {id} matches the running
+#    session's userId. The legitimate use case (a user editing their
+#    own profile via the UI) goes through different surface area; the
+#    MCP doesn't need to support self-mutation by ID.
+_USER_ID_PATH_RE = None  # lazily compiled below
+
+# 2) Refuse calls into /managed/* (MDR module). Per the post-incident
+#    rule: composer-mcp lives in the VDD/discovery world only. If you
+#    need to push something through MDR you do it manually, deliberately,
+#    outside this codebase.
+_MDR_PATH_PREFIXES = ("/managed", "managed/")
+
+
+class MdrEndpointBlocked(RuntimeError):
+    """Raised when something tries to call a /managed/* (MDR) endpoint.
+
+    Per the 2026-05-07 incident: composer-mcp is VDD-only. MDR endpoints
+    are a footgun (see SAFETY.md, Glyn McKenna's June 2025 email) and we
+    don't drive them from automation. If you genuinely need MDR, do it
+    manually with a fresh CLI / curl + a documented one-shot session.
+    """
+
+
+class SelfUserMutationBlocked(RuntimeError):
+    """Raised when a write would mutate the running session's own user record.
+
+    Specifically: PUT/PATCH/DELETE on `/api/users/{runningUserId}`. This is
+    how amin.hasan locked himself out on 2026-05-07.
+    """
+
 
 @dataclass(frozen=True)
 class ComposerConfig:
@@ -118,6 +152,10 @@ class ComposerClient:
             timeout=httpx.Timeout(60.0),
             follow_redirects=False,
         )
+        # Cache of the running session's user id, populated lazily on the
+        # first request. Used by the self-mutation guard.
+        self._running_user_id: str | None = None
+        self._running_user_id_fetched: bool = False
 
     async def aclose(self) -> None:
         await self._client.aclose()
@@ -145,11 +183,55 @@ class ComposerClient:
             headers["X-CSRF-TOKEN"] = self.cfg.csrf_token
         return headers
 
+    async def _ensure_running_user_id(self) -> str | None:
+        """Fetch and cache the running session's user id (best-effort)."""
+        if self._running_user_id_fetched:
+            return self._running_user_id
+        self._running_user_id_fetched = True
+        try:
+            resp = await self._client.request("GET", "/api/user")
+            if resp.status_code < 400 and resp.content:
+                body = resp.json()
+                if isinstance(body, dict):
+                    self._running_user_id = body.get("id") or body.get("userId")
+        except Exception:
+            self._running_user_id = None
+        return self._running_user_id
+
+    async def _enforce_guards(self, method: str, path: str) -> None:
+        """Hard guards. See module docstring + SAFETY.md."""
+        # Guard 1: never call /managed/* (MDR module). composer-mcp is VDD-only.
+        # Strip leading slash for prefix check.
+        check_path = path if path.startswith("/") else "/" + path
+        if any(check_path.startswith(p) for p in _MDR_PATH_PREFIXES):
+            raise MdrEndpointBlocked(
+                f"Refusing to call MDR endpoint '{path}'. composer-mcp is "
+                f"VDD-only by policy after the 2026-05-07 incident. If you "
+                f"need MDR, do it manually outside this codebase."
+            )
+
+        # Guard 2: refuse to mutate /api/users/{me} for the running session.
+        if method.upper() in {"PUT", "PATCH", "DELETE"}:
+            # /api/users/{id} or /users/{id}
+            import re
+            m = re.match(r"^/?(?:api/)?users/([^/?#]+)/?$", check_path.lstrip("/"))
+            if m:
+                target_id = m.group(1)
+                me = await self._ensure_running_user_id()
+                if me and target_id == me:
+                    raise SelfUserMutationBlocked(
+                        f"Refusing {method} on /api/users/{target_id} because "
+                        f"that is the running session's own user id. This is "
+                        f"how amin.hasan locked himself out on 2026-05-07. "
+                        f"See SAFETY.md."
+                    )
+
     async def request(
         self, method: str, path: str, json: Any | None = None, params: dict | None = None
     ) -> Any:
         path = path if path.startswith("/") else "/" + path
         path = path if path.startswith("/api") else "/api" + path
+        await self._enforce_guards(method, path)
         extra_headers = self._mutation_headers(method)
         resp = await self._client.request(
             method, path, json=json, params=params, headers=extra_headers or None
