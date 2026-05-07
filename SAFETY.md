@@ -112,3 +112,39 @@ re-login), a Symphony super-admin can call the MDR endpoint
 force a clean re-push. This requires a session whose user is in
 "System Administrators" — if the bootstrap `admin` user's password is
 known, that's the safest credential to use for the migrate call.
+
+### The recipe that worked on 2026-05-07
+
+```bash
+PW="<bootstrap admin password>"
+
+# 1. Auth via MDR Logon
+curl -s -X POST "$BASE/managed/API/Logon" \
+  -H "Content-Type: application/json" \
+  -d "{\"accountName\":\"admin\",\"password\":\"$PW\",
+       \"isWindowsLogOn\":false,\"performDataDiscoveryLogon\":true,
+       \"deleteOtherSessions\":true}" -o /tmp/admin-logon.json
+SID=$(jq -r .sessionId /tmp/admin-logon.json)
+
+# 2. Force MDR -> VDD re-sync for every account
+curl -s -X POST \
+  "$BASE/managed/API/Admin/MigrateAccountServicesObjectsToDataDiscovery?sessionId=$SID" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{"options":{}}' -o /tmp/mig.json
+
+# 3. Inspect the per-user message for the broken account
+jq '.messages[] | select(.name=="amin.hasan")' /tmp/mig.json
+# Look for "Migration succeeded" and the "user membership in the
+# following groups is updated" line listing the restored groups.
+
+# 4. Have the affected user log in fresh via /managed/LogOn (not
+#    /discovery/login). Their session will pick up the restored roles
+#    on first call.
+```
+
+The migrate endpoint is idempotent and operates over every account in
+the system, not just the broken one. Errors on unrelated accounts
+(`errorCount > 0` in the summary) are normal — usually old/orphaned
+records from past tenant deletions. Filter the messages to your
+specific user before celebrating or panicking.
