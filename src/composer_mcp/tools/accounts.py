@@ -1,6 +1,18 @@
 """Multi-tenancy: accounts (tenants), user/admin assignment, tenant switching,
 dashboard sharing.
 
+⚠️  PUT-REPLACE WARNING — READ SAFETY.md BEFORE CALLING ANY MUTATION HERE. ⚠️
+
+Every PUT in this module REPLACES the entire collection on the server. If
+you call `add_users_to_account` with a list of one user, you have evicted
+every other user from that tenant. Same shape applies to `add_admins_to_account`
+and the dashboard ACL bulk update. Always read first, modify the list in
+memory, then write back the full list.
+
+This is the same class of bug that wiped amin.hasan's VDD admin roles
+on 2026-05-07 (different endpoint, same root cause: not enforcing
+read-modify-write on overwrite-style endpoints). See SAFETY.md.
+
 Lessons from real bundled-Symphony usage:
 
 * `POST /api/accounts` does NOT accept `{name}` directly. The endpoint expects
