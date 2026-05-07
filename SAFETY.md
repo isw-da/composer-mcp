@@ -227,3 +227,100 @@ the system, not just the broken one. Errors on unrelated accounts
 (`errorCount > 0` in the summary) are normal — usually old/orphaned
 records from past tenant deletions. Filter the messages to your
 specific user before celebrating or panicking.
+
+### Per-persona row narrowing via the proxy + `visual.source.filters`
+
+Added 2026-05-08 after the Otto Group UC4 build burned ~6 hours
+walking into three independent Composer bugs trying to do per-persona
+RLS the textbook way. The path that actually works is documented in
+`SCHEMA_NOTES.md` "Forced filters" section (B+C); this block is the
+"don't lose this recipe" version.
+
+The setup:
+
+* One MDR-synced underlying user (`amin.hasan` in the Otto demo). All
+  personas mint push tokens against this user, with `preserveGroups`
+  carrying the role bag.
+* No source-level Row Security rule active for that user. (Leave
+  rules in place if other users use them; just don't have the embed
+  user as an assignee.)
+* A small Python proxy server-side (admin Basic Auth never leaves
+  the server) that takes a partner CSV and PUTs `source.filters` on
+  every widget visual on the consolidated dashboard.
+
+The proxy:
+
+```python
+def apply_persona_filter(partner_csv: str):
+    """For every widget visual on the consolidated dashboard, write
+    source.filters with the persona's partner names. Empty CSV clears."""
+    dash = api_get(f"/api/dashboards/{DASHBOARD_ID}")
+    vids = [w.get("visualId") or w.get("content", {}).get("visualId")
+            for w in dash.get("widgets", []) if w]
+
+    values = [s.strip() for s in (partner_csv or "").split(",") if s.strip()]
+    new_filter = ([{"path": FILTER_PATH, "operation": "IN", "value": values}]
+                  if values else [])
+
+    for vid in vids:
+        v = api_get(f"/api/visuals/{vid}")
+        if v.get("source", {}).get("sourceId") != SOURCE_ID:
+            continue
+        for k in ("createdByUserID", "createdDate", "creatingUserName",
+                  "lastModifiedByUserID", "lastModifiedDate", "originId",
+                  "version"):
+            v.pop(k, None)
+        v["source"]["filters"] = new_filter
+        api_put(f"/api/visuals/{vid}", v)
+```
+
+Critical shape detail: `value` (singular key). `values` (plural) is
+accepted by PUT but Composer strips the array and stores `path: null`
+ — filter persists structurally but never matches anything at runtime.
+`value` accepts a single string OR an array of strings.
+
+The shell side, on persona switch:
+
+```js
+sel.addEventListener('change', async () => {
+  const csv = sel.options[sel.selectedIndex].dataset.partnerCsv || '';
+  await fetch('/api/persona', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({partner_csv: csv}),
+  });
+  // Re-mint token, destroy + recreate the dashboard component.
+  // The embed manager caches visual configs at createComponent time
+  // (see LIMITATIONS.md "Visual config cache against the push-token
+  // session"), so a destroy + recreate is required — a soft refresh
+  // won't pick up the new filters.
+});
+```
+
+Working reference shipping in this repo:
+* `embed/serve_nocache.py` — proxy + dev server with `Cache-Control:
+  no-store` on every response
+* `embed/otto-opc-shell.html.template` — full shell with persona
+  switcher wired
+
+### What burned the hours (so you don't repeat it)
+
+Three Composer behaviours that all look like they should give you
+RLS and don't:
+
+1. **Source-level Row Security** on a column in a cross-warehouse
+   joined source 500s the field-stats pre-flight every render.
+   "Error while preparing the request" on every widget. Not fixable
+   client-side. See `LIMITATIONS.md` "Server bugs that look like API
+   problems".
+2. **TA_PUSH-only users** can't drive the data engine even with
+   identical READ/DATA_ACCESS and role bag to a working user. The
+   data engine seems to require an MDR-side user record. So you
+   can't just spin up an embed user and have it work.
+3. **`dashboard.rowFilters`** PUT is accepted, persists, and is
+   ignored at runtime. **`embed.js createComponent({filters})`** is
+   the filter pane visibility option, not row filtering.
+
+Per-visual `source.filters` PUT with the singular-`value` shape is
+the only API path that actually filters data at query time. Hence
+the proxy.

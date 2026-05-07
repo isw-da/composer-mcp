@@ -46,6 +46,93 @@ side from a tenant-admin context.
 * **Workaround:** Use `composer_whoami` — it returns `accountsVisible`
   count which tells you whether you have global vs tenant scope.
 
+## Server bugs that look like API problems
+
+Verified empirically on 2026-05-07/08 against UAT v25. Each one ate
+hours before we found the workaround.
+
+### Source-level Row Security 500s on cross-warehouse joined sources
+* **Endpoint:** `POST /api/sources/{id}/fields/{field}/statistics/total`
+  (called automatically by the data engine pre-flight when any visual
+  renders under a row-security rule)
+* **Symptom:** Every widget on the dashboard renders "Error while
+  preparing the request. Please contact system administrator."
+  Network shows `{"error":"Internal Server Error", "details":"Can't
+  get field statistics, service response code: 500"}` for the
+  field-stats endpoint.
+* **Trigger:** Source-level Row Security rule with
+  `<col> INCLUDE ${User.<attr>}` (or any operator) when `<col>` exists
+  in only one of the joined entities of a cross-warehouse source.
+  Otto's Snowflake `Partners` ⋈ BigQuery `Article Attributes` joined
+  source hits this every time. Repro reduced from the rule alone with
+  a TEXT column; doesn't require interpolation to fail.
+* **Workaround:** Don't apply the rule on cross-warehouse sources at
+  the column level. Use per-visual `source.filters` PUT (singular
+  `value` key) instead. `embed/serve_nocache.py` ships a working
+  `/api/persona` proxy that bulk-PUTs all dashboard widgets per
+  persona. See the "Forced filters (row-level security)" section in
+  `SCHEMA_NOTES.md` for the full pattern.
+
+### TA_PUSH-only users cannot drive the data engine
+* **Symptom:** Embed renders chrome, visual configs fetch (200 OK),
+  permissions endpoints return identical results to a working user,
+  but no query ever fires. Spinners forever.
+* **Trigger:** Mint a push token for a user whose `userOrigin` is
+  `TA_PUSH` and who has no MDR-side counterpart. Reproduced against
+  `otto.embed` and `demo.otto_admin` even after granting them the
+  full role bag (Administrators / Supervisors / Content Distributors
+  → 32 roles) and READ + DATA_ACCESS at user and account level.
+* **Compare:** `amin.hasan` (also `userOrigin: TA_PUSH` but MDR-synced
+  from a real Symphony Global Administrator account) works on the
+  same tokens with the same body shape.
+* **Workaround:** Run all embed sessions as one MDR-synced user
+  underneath. Differentiate personas at the data layer (per-visual
+  filter PUT), not at the user layer.
+* **Worth raising with engineering:** The data-engine session may
+  require an MDR-side user record even when ACL/role checks pass at
+  the Discovery side. We never identified the exact gate.
+
+### `dashboard.rowFilters` is accepted but ignored at runtime
+* **Symptom:** PUT `/api/dashboards/{id}` with `rowFilters: [{sourceId,
+  path: "<col>", operation: "IN", value: [...]}]` returns 200, the
+  filter persists on read-back, but the engine renders full data.
+* **The shape Composer accepts is `value` (singular)** — `values`
+  (plural) errors with "Non-composite filters must assign value to
+  multiple fields with values=[null]". Singular `value` accepts a
+  string OR an array of strings; both store as an array. But neither
+  actually filters anything.
+* **Workaround:** Use `visual.source.filters` (per-widget) instead.
+  Same `value` singular-key shape, but applied at the visual level it
+  actually filters at runtime.
+
+### `embed.js createComponent({filters})` is the filter pane, not the data
+* **Symptom:** Pass `filters: [{path, operation, values}]` to
+  `createComponent('dashboard', {...})`, expecting per-render row
+  filtering. Data doesn't change.
+* **Why:** Reading the embed source (`/discovery/embed/embed.js`),
+  the `filters` option destructures into
+  `this.components.filters = {visible: true}` — it configures filter
+  pane visibility, alongside `actions`, `search`, `searchByField`,
+  `table`. There's no createComponent option for forced row filters
+  on a dashboard component. (The visualization-create route does take
+  filters, but that's not what dashboards use.)
+* **Workaround:** Bake the filter into `visual.source.filters` via
+  REST PUT before re-rendering. Same singular `value` key as above.
+
+### Push token `attributes[].values` is capped at length 1
+* **Symptom:** `POST /api/trusted-access/push/tokens` with
+  `attributes: [{key: "x", values: ["a","b","c"]}]` returns
+  `400 'attributes[0].values' size must be between 0 and 1`.
+  Multiple entries with the same key error with `'attributes' should
+  not contain duplicates`.
+* **Workaround:** Pack a CSV into a single value:
+  `values: ["a,b,c"]`. Composer's INCLUDE / IN operator expanding a
+  user attribute into a multi-value list relies on the value being a
+  CSV string at evaluation time. (Untested at runtime in our
+  environment because of the cross-warehouse rule failure above.
+  Documented for completeness; if you can use source-level rules in
+  your environment, this is the workaround for the API cap.)
+
 ## Hard limits (not exposed in this Composer build)
 
 These endpoints don't exist in v25. May land in a future release; not
@@ -150,6 +237,8 @@ helper rather than reinventing.
 | `PERCENTAGE` numberFormat | Rejects `standardUnit` | `sources.NUMBER_FORMATS["PERCENT"]` preset |
 | API-created tenants invisible in UI | UI filter excludes ObjectId-format ids | Create via UI for admin-list visibility, or use API for headless setups |
 | Bundled Symphony mutations 403 | "Session expired" message is misleading | Client adds `X-CSRF-TOKEN` automatically when `COMPOSER_CSRF_TOKEN` is set |
+| Per-visual `source.filters` value shape | `values` (plural) silently strips, stores `path: null` | Use `value` (singular) — accepts string or array, persists and filters at runtime |
+| Per-persona row narrowing | Source-RLS 500s on cross-warehouse joined sources; `dashboard.rowFilters` ignored; `createComponent({filters})` is UI not data | `embed/serve_nocache.py`'s `/api/persona` proxy bulk-PUTs `visual.source.filters` per widget |
 
 ## Where the workarounds live
 

@@ -206,6 +206,107 @@ The canonical "everyone sees only their own data" pattern:
 Wrappers in `tools/sources.py`: `list_forced_filters`, `add_forced_filter`,
 `remove_forced_filters_for_sid`, `clear_forced_filters`.
 
+**Two failure modes to know about**, both verified live on 2026-05-08
+during the Otto Group cross-warehouse build (Snowflake fact + BigQuery
+dim joined in one source). The textbook pattern above silently breaks
+when these conditions are met.
+
+#### A. Cross-warehouse joined source breaks the field-stats pre-flight
+
+When the rule's field column lives in only one of the joined entities
+(e.g. `partner_name` lives in the Snowflake `Partners` entity, not in
+the BigQuery `Article Attributes` entity), every visual that tries to
+render under the rule fails with:
+
+```
+{"error":"Internal Server Error",
+ "details":"Can't get field statistics, service response code: 500"}
+```
+
+User sees "Error while preparing the request" on every widget. The
+interpolation succeeds (so `${User.persona_partner}` resolves cleanly);
+the failure is downstream of that, in the field-stats pre-flight that
+Composer runs before query planning.
+
+Fix: don't apply source-level row security on a column that only
+exists in one of the joined entities of a cross-warehouse source. If
+you need partner-level scoping, either (a) collapse the join into a
+single warehouse first, or (b) use the per-visual filter approach
+described in (B) below. The MCP can't paper over this — it's a server
+bug.
+
+#### B. TA_PUSH-only users can't drive the data engine
+
+Users created purely via push tokens (`userOrigin: TA_PUSH`, no MDR
+sync) cannot run queries through the embed even when they hold:
+
+* `READ + DATA_ACCESS` on the source (account level + user level)
+* The full role bag (Administrators / Supervisors / Content
+  Distributors → 32 roles)
+* All required group memberships
+
+Symptom: dashboard chrome renders, visual configs fetch, then no
+query ever fires. Spinners forever. The same tokens used by an
+MDR-synced user (e.g. `amin.hasan` who exists on both sides) work
+fine. Verified by minting tokens for `otto.embed` and
+`demo.otto_admin` (TA_PUSH only) versus `amin.hasan` (MDR-synced)
+with identical bodies and identical /api/user/permissions responses
+— only amin loaded data.
+
+Fix: run all personas as one MDR-synced user underneath. Differentiate
+personas via the data filter, not via swapping users (see C).
+
+#### C. The pattern that does work for per-persona narrowing
+
+When the source-level rule is broken (A) or the embed user can't
+change between requests (B), use **per-visual `source.filters` PUT**
+across every widget on the dashboard.
+
+The shape that actually filters data at query time is **`value`
+(singular key)**, not `values`:
+
+```
+[{path: "partner_name",
+  operation: "IN",
+  value: ["Otto Tech", "Bergen Tech"]}]
+```
+
+`values` (plural) is accepted by PUT but Composer strips the array
+and stores `path: null` — the filter persists structurally but never
+matches anything at runtime. `value` (singular) accepts a single
+string OR an array of strings; both store as an array and apply
+correctly at runtime.
+
+Per-persona switch flow:
+
+1. Server-side: read every widget visual on the dashboard, set
+   `source.filters` to the persona's filter (or `[]` to clear), PUT
+   each one back. Strip the `version` and audit fields before PUT.
+2. Re-mint the embed token. Re-render the dashboard component (so
+   embed.js re-fetches visual configs — see "Visual config cache
+   against the push-token session" in `LIMITATIONS.md`).
+
+Working reference: `embed/serve_nocache.py`'s `/api/persona` endpoint
+ships this proxy. The Otto-OPC shell calls it on persona switch.
+
+#### What does NOT work for per-persona narrowing (don't waste time)
+
+* `dashboard.rowFilters` PUT — accepted, stored, but the engine
+  ignores it at render time. Visuals render full data.
+* `embed.js createComponent({filters: [...]})` — the `filters`
+  option configures the filter PANE visibility, not the data. Read
+  `this.components.filters = {visible: true}` in the embed source.
+* Push token `attributes[].values` carrying a CSV string — even if
+  the rule template auto-splits, you still need the rule to fire,
+  and the rule firing on a cross-warehouse source hits failure (A).
+  (Also: the push API caps `attributes[].values` at length 1, so
+  multi-partner narrowing must encode as a CSV in a single value
+  anyway. Documented for completeness, but irrelevant if you take
+  the (C) path.)
+* `visual.source.filters` with `values` (plural) — values get
+  silently stripped, only `path: null` persists. Use `value`
+  (singular) per (C) above.
+
 * `to_native_field()` reshape between describe and create endpoints — the
   `describe` shape includes some fields the `create` endpoint rejects.
 * Cross-tenant migration is `GET /api/sources/export?ids=...` then `POST
