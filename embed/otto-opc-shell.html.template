@@ -32,10 +32,136 @@
       background: linear-gradient(90deg, var(--otto-red) 0%, #FBC02D 50%, #388E3C 100%);
       flex-shrink: 0;
     }
+
+    /* Saved views drawer */
+    .views-toggle {
+      position: fixed;
+      top: 18px;
+      left: 16px;
+      z-index: 60;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px 6px 10px;
+      background: white;
+      border: 1px solid var(--otto-line);
+      border-radius: 14px;
+      color: var(--otto-graphite);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .views-toggle:hover { background: var(--otto-mist); border-color: var(--otto-stone); }
+    .views-drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 280px;
+      height: 100vh;
+      background: white;
+      border-right: 1px solid var(--otto-line);
+      box-shadow: 4px 0 14px rgba(0,0,0,0.08);
+      z-index: 70;
+      transform: translateX(-100%);
+      transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 20px 18px;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    .views-drawer.open { transform: translateX(0); }
+    .views-drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .views-drawer-header h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--otto-graphite);
+    }
+    .views-drawer-close {
+      background: transparent;
+      border: 0;
+      color: var(--otto-stone);
+      font-size: 24px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0 4px;
+    }
+    .views-drawer-close:hover { color: var(--otto-graphite); }
+    .views-save {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--otto-red);
+      color: white;
+      border: 0;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 14px;
+      transition: background 0.15s;
+    }
+    .views-save:hover { background: var(--otto-red-dark); }
+    .views-list { list-style: none; padding: 0; margin: 0; }
+    .views-list li {
+      display: flex;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.12s;
+      font-size: 13px;
+      color: var(--otto-graphite);
+      gap: 8px;
+    }
+    .views-list li:hover { background: var(--otto-mist); }
+    .views-list .name { flex: 1; }
+    .views-list .meta { color: var(--otto-stone); font-size: 11px; }
+    .views-list .delete {
+      background: transparent;
+      border: 0;
+      color: var(--otto-stone);
+      cursor: pointer;
+      padding: 0 4px;
+      font-size: 16px;
+      opacity: 0.4;
+      transition: opacity 0.12s, color 0.12s;
+    }
+    .views-list li:hover .delete { opacity: 1; }
+    .views-list .delete:hover { color: var(--otto-red); }
+    .views-empty {
+      color: var(--otto-stone);
+      font-size: 12px;
+      line-height: 1.5;
+      padding: 8px 10px;
+      margin: 0;
+    }
+    .views-empty.hidden { display: none; }
+    .views-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.18);
+      z-index: 65;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 200ms ease;
+    }
+    .views-backdrop.open { opacity: 1; pointer-events: auto; }
     header {
       background: white;
       border-bottom: 1px solid var(--otto-line);
-      padding: 0 32px;
+      /* Extra left padding leaves room for the My views toggle button */
+      padding: 0 32px 0 130px;
       height: 68px;
       display: flex;
       align-items: center;
@@ -82,7 +208,93 @@
       font-weight: 600;
       letter-spacing: 0.3px;
     }
+    .partner-tag-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--otto-red-tint);
+      color: var(--otto-red);
+      padding: 4px 6px 4px 14px;
+      border-radius: 14px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+    }
+    .partner-tag-label {
+      color: var(--otto-stone);
+      font-weight: 500;
+    }
+    .partner-tag-select {
+      background: white;
+      color: var(--otto-red);
+      border: 1px solid var(--otto-red-tint);
+      border-radius: 10px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .partner-tag-select:hover { border-color: var(--otto-red); }
+    .partner-tag-select:focus { box-shadow: 0 0 0 3px rgba(226,0,26,0.2); }
+    /* Subtle "re-rendering" state on the partner-tag wrap during token re-mint */
+    .partner-tag-wrap.refreshing { opacity: 0.6; pointer-events: none; }
     main { flex: 1; position: relative; background: white; overflow: hidden; }
+
+    /* Metric switcher — Tab 2 chip control above the Top-N visuals */
+    .metric-switcher {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      padding: 6px 12px;
+      border: 1px solid var(--otto-line);
+      border-radius: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      font-size: 13px;
+    }
+    .metric-switcher-label {
+      color: var(--otto-stone);
+      font-weight: 500;
+      padding-right: 4px;
+    }
+    .metric-chip {
+      background: transparent;
+      border: 0;
+      padding: 6px 14px;
+      border-radius: 14px;
+      font-size: 13px;
+      color: var(--otto-stone);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.12s;
+    }
+    .metric-chip:hover { color: var(--otto-graphite); background: var(--otto-mist); }
+    .metric-chip.active {
+      background: var(--otto-red);
+      color: white;
+      font-weight: 600;
+    }
+    /* When a metric is active, hide the other two Top-N widgets and expand the
+       active one to fill the row. Widget wrappers are tagged with
+       data-widget-metric on the JS side after embed init (separate from the
+       data-metric attribute on the chips themselves). */
+    .pane[data-pane="campaigns"][data-metric="sales"]  [data-widget-metric="clicks"],
+    .pane[data-pane="campaigns"][data-metric="sales"]  [data-widget-metric="roas"],
+    .pane[data-pane="campaigns"][data-metric="clicks"] [data-widget-metric="sales"],
+    .pane[data-pane="campaigns"][data-metric="clicks"] [data-widget-metric="roas"],
+    .pane[data-pane="campaigns"][data-metric="roas"]   [data-widget-metric="sales"],
+    .pane[data-pane="campaigns"][data-metric="roas"]   [data-widget-metric="clicks"] {
+      display: none !important;
+    }
     /* Panes are always laid out so each embedded dashboard knows its real
        height. We swap tabs by stacking with z-index + opacity, never
        display:none — Composer measures the host once at render time. */
@@ -115,6 +327,18 @@
        `body` to clear Composer's own selector specificity. */
     body div[class*="Tqwvz2y"] { background-color: #FFFFFF !important; }
     body div[class*="W95yvuc"] { color: #E2001A !important; }
+    /* Hide the noisy comparison row at the bottom of every KPI tile.
+       Composer renders Comparison Metric directly under the main number;
+       until proper period-over-period custom metrics land, hiding it
+       reads cleaner than showing the duplicate value. The Comparison Metric
+       still has to be set on the visual record (empty array breaks rendering)
+       so this is a presentation-only hide. Hashed class names verified via
+       DOM probe; iKPcjms8 = 0.00 state, REAr5eQ = mirror-of-main state. */
+    body div[class*="iKPcjms8"],
+    body div[class*="REAr5eQ"] { display: none !important; }
+    /* The "Comparison Metric: <Metric>" footer-legend strip beneath the
+       widget body (`.widgetLabel.bottom`). */
+    body div.widgetLabel.bottom { display: none !important; }
     /* Comparison-row down arrow on the KPI tile keeps Composer's orange by
        default; pin it to a neutral graphite so the tile reads cleanly. */
     body div[class*="W95yvuc"] + div { color: #6B6B6B !important; }
@@ -205,6 +429,25 @@
 </head>
 <body>
   <div class="stripe"></div>
+  <!-- Saved views drawer: slides in from the left when toggled. Captures
+       active tab + partner + metric chip into localStorage so the partner
+       can come back to a personalised view next session. Peter wants this
+       to feel like Composer-native saved views, just plumbed at the
+       parent-app layer (until v25 surfaces the bookmarks API). -->
+  <button class="views-toggle" id="views-toggle" aria-label="My saved views" title="My saved views">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+    <span>My views</span>
+  </button>
+  <div class="views-drawer" id="views-drawer" aria-hidden="true">
+    <div class="views-drawer-header">
+      <h3>My views</h3>
+      <button class="views-drawer-close" id="views-close" aria-label="Close">&times;</button>
+    </div>
+    <button class="views-save" id="views-save">+ Save current view</button>
+    <ul class="views-list" id="views-list"></ul>
+    <p class="views-empty" id="views-empty">No saved views yet. Set the tab, partner and metric you want, then click Save.</p>
+  </div>
+  <div class="views-backdrop" id="views-backdrop"></div>
   <header>
     <div class="brand">
       <!-- Real Otto Group 2022 wordmark, inline SVG, sourced from Wikimedia Commons -->
@@ -219,13 +462,36 @@
       <button data-target="campaigns">Where to redirect spend</button>
       <button data-target="brands">Brand &amp; category mix</button>
     </nav>
-    <span class="partner-tag">TechWorld GmbH</span>
+    <!-- Partner selector. Each option re-mints the embed push token with that
+         partner's group claim, then refreshes the embedded dashboards in
+         place. Demonstrates the app-level interactivity Peter calls out as the
+         differentiator vs iframe-only embedding: the parent app switches the
+         end-user identity / scope, the embed tracks. -->
+    <label class="partner-tag-wrap" title="Switch partner identity (re-mints embed token)">
+      <span class="partner-tag-label">Acting as</span>
+      <select id="partner-select" class="partner-tag-select">
+        <option value="TechWorld GmbH" selected>TechWorld GmbH</option>
+        <option value="HomeBasics AG">HomeBasics AG</option>
+        <option value="StyleHub SE">StyleHub SE</option>
+      </select>
+    </label>
   </header>
   <main>
     <div class="pane active" data-pane="snapshot">
       <div class="embed-host" id="host-snapshot"></div>
     </div>
     <div class="pane" data-pane="campaigns">
+      <!-- Shell-level metric switcher: one click swaps which Top-N is visible.
+           Replaces the three side-by-side Top-N visuals with a single-visual
+           feel. Implemented at the shell layer because Composer's left-rail
+           metric picker is a standalone-mode feature; in the embed we drive
+           it from the parent app. -->
+      <div class="metric-switcher" data-for="campaigns" role="tablist" aria-label="Top 10 metric">
+        <span class="metric-switcher-label">Top 10 campaigns by</span>
+        <button data-metric="sales" class="metric-chip active">Sales (EUR)</button>
+        <button data-metric="clicks" class="metric-chip">Clicks</button>
+        <button data-metric="roas" class="metric-chip">ROAS</button>
+      </div>
       <div class="embed-host" id="host-campaigns"></div>
     </div>
     <div class="pane" data-pane="brands">
@@ -252,26 +518,24 @@
     composerApiUrl: 'https://uat.logi-symphony.com/discovery',
     apiContentType: 'application/vnd.composer.v3+json',
     trustedAccess: {
-      // Trusted Access client must be registered AND scoped to this account
-      // by a Symphony global admin. Tenant admins cannot register clients
-      // (POST /api/trusted-access/clients returns 403).
+      // Existing UAT Trusted Access client (same as wizard-demo embed)
       clientId: 'REPLACE_WITH_YOUR_CLIENT_ID',
       secret:   'REPLACE_WITH_YOUR_CLIENT_SECRET',
     },
-    sharedUsername: 'tenant.viewer', // any user existing in `account`
-    account: 'Otto Group',           // literal display name with spaces
-    group: 'TechWorld GmbH',         // forced filter group claim
-    // The custom 'otto' theme overrides per-visual palette settings, so
-    // UBER_BARS bars pick up the inherited modern theme's rainbow palette
-    // instead of the Otto red set on each visual. '__platform__' lets the
-    // per-visual configs win. Brand chrome is enforced via shell CSS below.
+    sharedUsername: 'amin.hasan',
+    account: 'Otto Group',
+    group: 'TechWorld GmbH',
+    // The 'otto' theme overrides per-visual palette settings, so UBER_BARS bars
+    // pick up the inherited modern theme's rainbow palette instead of the Otto
+    // red I set on each visual. Falling back to '__platform__' lets the
+    // per-visual configs win. Otto branding is enforced via shell CSS.
     theme: '__platform__',
     // Dashboard IDs are stored in URLs as <accountId>_<dashId>;
     // the embed manager wants <accountId>+<dashId>.
     dashboards: {
-      snapshot:  'REPLACE_ACCOUNT_ID+REPLACE_SNAPSHOT_DASH_ID',
-      campaigns: 'REPLACE_ACCOUNT_ID+REPLACE_CAMPAIGNS_DASH_ID',
-      brands:    'REPLACE_ACCOUNT_ID+REPLACE_BRANDS_DASH_ID',
+      snapshot:  '7d498e0c-c75c-4089-b851-b88875b89432+69fba5090b70396702ebb36e',
+      campaigns: '7d498e0c-c75c-4089-b851-b88875b89432+69fba50a0b70396702ebb371',
+      brands:    '7d498e0c-c75c-4089-b851-b88875b89432+69fba50a0b70396702ebb374',
     },
     // Partner-app-side hover tooltips. Keyed on widget title (case-insensitive
     // substring match). Lets us add real partner-context guidance without
@@ -368,44 +632,66 @@
     });
   });
 
+  // Embed state — tracked at module scope so the partner switcher can re-render
+  // in place without a full page reload.
+  const embedState = {
+    mgr: null,
+    components: {},  // key -> { comp, target }
+    currentToken: null,
+  };
+
+  async function renderAllDashboards(embedMgr) {
+    const tasks = Object.entries(CONFIG.dashboards).map(async ([key, dashboardId]) => {
+      const host = document.getElementById(`host-${key}`);
+      host.innerHTML = '';
+      const target = document.createElement('div');
+      target.style.cssText = 'width:100%;height:100%';
+      host.appendChild(target);
+      const comp = await embedMgr.createComponent('dashboard', {
+        originId: '',
+        dashboardId,
+        interactivityProfileName: 'interactive',
+        theme:  CONFIG.theme,
+        editor: { placement: 'modals' },
+        header: { visible: false, showActions: false, showTitle: false },
+      });
+      await comp.render(target, { width: '100%', height: '100%' });
+      embedState.components[key] = { comp, target };
+    });
+    await Promise.all(tasks);
+  }
+
   // Boot
   (async () => {
     try {
       setStatus('Requesting embed token…');
       const tok = await getPushToken();
+      embedState.currentToken = tok;
 
       setStatus('Loading Composer embed runtime…');
       await loadEmbedScript();
 
       setStatus('Initialising embed manager…');
-      const embedMgr = await window.initComposerEmbedManager({
+      embedState.mgr = await window.initComposerEmbedManager({
         getToken: async () => ({
-          access_token: tok.access_token,
-          expires_in:   tok.expires_in || 86399,
+          access_token: embedState.currentToken.access_token,
+          expires_in:   embedState.currentToken.expires_in || 86399,
         }),
       });
 
       setStatus('Rendering dashboards…');
-      const tasks = Object.entries(CONFIG.dashboards).map(async ([key, dashboardId]) => {
-        const host = document.getElementById(`host-${key}`);
-        host.innerHTML = '';
-        const target = document.createElement('div');
-        target.style.cssText = 'width:100%;height:100%';
-        host.appendChild(target);
-        const comp = await embedMgr.createComponent('dashboard', {
-          originId: '',
-          dashboardId,
-          interactivityProfileName: 'interactive',
-          theme:  CONFIG.theme,
-          editor: { placement: 'modals' },
-          header: { visible: false, showActions: false, showTitle: false },
-        });
-        await comp.render(target, { width: '100%', height: '100%' });
-      });
-      await Promise.all(tasks);
+      await renderAllDashboards(embedState.mgr);
 
       hideStatus();
-      installTooltipLayer();
+      // Fetch every dashboard's widgets + every visual's `description` so the
+      // hover layer below pulls from Composer's native visualDescription field
+      // (the "Info > visual description" panel in the Composer UI). Falls back
+      // to CONFIG.tooltips for anything Composer doesn't have a description on.
+      const descriptions = await loadVisualDescriptions(tok.access_token);
+      installTooltipLayer(descriptions);
+      installMetricSwitcher();
+      installPartnerSwitcher();
+      installSavedViews();
     } catch (err) {
       console.error(err);
       showError(err);
@@ -413,18 +699,281 @@
   })();
 
   /* ───────────────────────────────────────────────
-     Hover tooltip layer (parent-app feature)
-     Watches each embed-host for widget headers and shows a contextual hint
-     when the user hovers. Tooltip text is keyed by widget title in CONFIG.tooltips.
+     Saved views — left-side drawer.
+     v25 of Composer doesn't expose a bookmarks/saved-views API (six
+     candidate endpoints all 404). So we store user state at the parent-
+     app layer in localStorage, scoped per username. A saved view captures:
+       { name, tab, partner, metric, savedAt }
+     Click to restore replays the captured state through the existing UI
+     controls (nav button click, partner select change, metric chip click)
+     so all the side effects (re-mint, re-render, attribute toggle) fire
+     without duplicating logic.
      ─────────────────────────────────────────────── */
-  function installTooltipLayer() {
+  function installSavedViews() {
+    const STORAGE_KEY = 'otto-saved-views:' + (CONFIG.sharedUsername || 'anonymous');
+    const toggle = document.getElementById('views-toggle');
+    const drawer = document.getElementById('views-drawer');
+    const backdrop = document.getElementById('views-backdrop');
+    const closeBtn = document.getElementById('views-close');
+    const saveBtn = document.getElementById('views-save');
+    const list = document.getElementById('views-list');
+    const empty = document.getElementById('views-empty');
+
+    function load() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+      catch { return []; }
+    }
+    function save(views) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(views));
+    }
+    function open() {
+      drawer.classList.add('open'); drawer.setAttribute('aria-hidden', 'false');
+      backdrop.classList.add('open');
+      render();
+    }
+    function close() {
+      drawer.classList.remove('open'); drawer.setAttribute('aria-hidden', 'true');
+      backdrop.classList.remove('open');
+    }
+
+    function captureState() {
+      const activeNav = document.querySelector('nav button.active');
+      const tab = activeNav ? activeNav.dataset.target : 'snapshot';
+      const partnerSel = document.getElementById('partner-select');
+      const partner = partnerSel ? partnerSel.value : CONFIG.group;
+      const activeChip = document.querySelector('.metric-chip.active');
+      const metric = activeChip ? activeChip.dataset.metric : 'sales';
+      return { tab, partner, metric };
+    }
+
+    async function restoreState(state) {
+      // 1) Switch tab
+      const navBtn = document.querySelector(`nav button[data-target="${state.tab}"]`);
+      if (navBtn) navBtn.click();
+      // 2) Switch partner if different (this re-mints + re-renders)
+      const partnerSel = document.getElementById('partner-select');
+      if (partnerSel && partnerSel.value !== state.partner) {
+        partnerSel.value = state.partner;
+        partnerSel.dispatchEvent(new Event('change'));
+      }
+      // 3) Switch metric chip on Tab 2
+      const targetChip = document.querySelector(`.metric-chip[data-metric="${state.metric}"]`);
+      if (targetChip && !targetChip.classList.contains('active')) targetChip.click();
+    }
+
+    function render() {
+      const views = load();
+      list.innerHTML = '';
+      if (views.length === 0) {
+        empty.classList.remove('hidden');
+      } else {
+        empty.classList.add('hidden');
+        views.forEach((v, i) => {
+          const li = document.createElement('li');
+          const dt = new Date(v.savedAt);
+          const dtStr = dt.toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
+          li.innerHTML = `<span class="name"></span><span class="meta"></span><button class="delete" title="Delete view">&times;</button>`;
+          li.querySelector('.name').textContent = v.name;
+          li.querySelector('.meta').textContent = dtStr;
+          li.addEventListener('click', (e) => {
+            if (e.target.closest('.delete')) return;
+            restoreState(v); close();
+          });
+          li.querySelector('.delete').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const fresh = load();
+            fresh.splice(i, 1);
+            save(fresh);
+            render();
+          });
+          list.appendChild(li);
+        });
+      }
+    }
+
+    toggle.addEventListener('click', open);
+    closeBtn.addEventListener('click', close);
+    backdrop.addEventListener('click', close);
+    saveBtn.addEventListener('click', () => {
+      const state = captureState();
+      const defaultName = `${state.partner.split(' ')[0]} – ${state.tab} (${state.metric})`;
+      const name = window.prompt('Name this view', defaultName);
+      if (!name) return;
+      const fresh = load();
+      fresh.unshift({ ...state, name, savedAt: Date.now() });
+      save(fresh.slice(0, 12));
+      render();
+    });
+
+    // Initial render so the count is right when the drawer opens
+    render();
+  }
+
+  /* ───────────────────────────────────────────────
+     Partner switcher — top-right header.
+     Demonstrates the "app-level interactivity" Peter calls out as the
+     differentiator vs iframe-only embedding. The parent app changes the
+     end-user identity (the `groups` claim on the push token) and the embed
+     re-renders in place. Same dashboards, different scope.
+
+     Composer's Trusted Access push tokens carry a `groups` array which is
+     applied as a forced filter at query time. So switching from
+     "TechWorld GmbH" to "HomeBasics AG" re-runs every visual's query
+     against the new partner's slice of data — without leaving the page,
+     without re-loading the embed runtime, without changing dashboards.
+     ─────────────────────────────────────────────── */
+  async function installPartnerSwitcher() {
+    const sel = document.getElementById('partner-select');
+    const wrap = sel?.closest('.partner-tag-wrap');
+    if (!sel || !wrap) return;
+    sel.addEventListener('change', async () => {
+      const newGroup = sel.value;
+      wrap.classList.add('refreshing');
+      try {
+        // Re-mint a push token with the new partner's group claim
+        CONFIG.group = newGroup;
+        const newTok = await getPushToken();
+        embedState.currentToken = newTok;
+
+        // Tear down + re-render every embed component so each visual re-queries
+        // with the new forced-filter scope from the token's groups claim.
+        for (const k of Object.keys(embedState.components)) {
+          try { embedState.components[k].comp.destroy(); } catch (_) {}
+        }
+        embedState.components = {};
+        await renderAllDashboards(embedState.mgr);
+
+        // Re-tag widgets for the metric switcher (Tab 2 widgets are recreated)
+        installMetricSwitcher();
+      } catch (e) {
+        console.error('partner switch failed', e);
+        // Roll back the select if it broke
+        sel.value = CONFIG.group;
+      } finally {
+        wrap.classList.remove('refreshing');
+      }
+    });
+  }
+
+  /* ───────────────────────────────────────────────
+     Metric switcher — Tab 2.
+     Replaces the previous three side-by-side Top-N visuals with a chip
+     control above the embed: one click swaps which metric drives the
+     visible Top-N. Composer's native left-rail metric picker is a
+     standalone-mode feature, so we drive the swap from the parent app.
+
+     The implementation tags each Composer-rendered widget wrapper with a
+     `data-metric` attribute by matching the widget title text to one of
+     {sales, clicks, roas}. CSS rules above (`.pane[data-pane=...][data-metric=...]`)
+     then hide the two non-active widgets while keeping the active one
+     visible at full width.
+     ─────────────────────────────────────────────── */
+  function installMetricSwitcher() {
+    const pane = document.querySelector('.pane[data-pane="campaigns"]');
+    if (!pane) return;
+
+    function tagWidgets() {
+      const items = pane.querySelectorAll('[class*="zd-grid-item"]');
+      let tagged = 0;
+      items.forEach(item => {
+        const txt = (item.textContent || '').slice(0, 80);
+        let metric = null;
+        if (/Top 10 Campaigns by Sales/i.test(txt))  metric = 'sales';
+        else if (/Top 10 Campaigns by Clicks/i.test(txt)) metric = 'clicks';
+        else if (/Top 10 Campaigns by ROAS/i.test(txt))   metric = 'roas';
+        if (metric) {
+          // data-widget-metric (not data-metric) so the CSS selector that
+          // hides inactive widgets doesn't accidentally also hide the chips
+          item.setAttribute('data-widget-metric', metric);
+          tagged++;
+        }
+      });
+      return tagged;
+    }
+
+    // Default to sales
+    pane.setAttribute('data-metric', 'sales');
+
+    // Composer renders widgets async after the embed initialises. Poll for a
+    // few seconds until all three Top-N wrappers are tagged.
+    let attempts = 0;
+    const intv = setInterval(() => {
+      const found = tagWidgets();
+      if (found >= 3 || ++attempts > 30) clearInterval(intv);
+    }, 250);
+
+    // Wire chip click handler
+    pane.querySelectorAll('.metric-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const m = chip.getAttribute('data-metric');
+        pane.setAttribute('data-metric', m);
+        pane.querySelectorAll('.metric-chip').forEach(c => c.classList.toggle('active', c === chip));
+        // Re-tag widgets in case Composer re-rendered them since last
+        tagWidgets();
+        // Also nudge a resize so the now-visible widget reflows to full width
+        window.dispatchEvent(new Event('resize'));
+      });
+    });
+  }
+
+  /* ───────────────────────────────────────────────
+     Visual description loader.
+     For every dashboard we embed, fetch its widgets, then fetch each widget's
+     visual to read Composer's native `description` field (the "Info > Visual
+     description" panel in Composer's UI). Cache by widget name so the hover
+     layer can look up partner-voice copy without bundling it client-side.
+     This is what we say to Otto when they ask how the tooltips work — it's
+     a real product feature, the description lives on the visual record on
+     the server, exposed via the standard REST API.
+     ─────────────────────────────────────────────── */
+  async function loadVisualDescriptions(accessToken) {
+    const map = {};  // widgetName -> description string
+    const H = {
+      'Accept': CONFIG.apiContentType,
+      'Authorization': 'Bearer ' + accessToken,
+    };
+    try {
+      for (const [, fullDashId] of Object.entries(CONFIG.dashboards)) {
+        const dashId = fullDashId.split('+')[1] || fullDashId;
+        const d = await fetch(`${CONFIG.composerApiUrl}/api/dashboards/${dashId}`, {headers: H}).then(r => r.json());
+        for (const w of (d.widgets || [])) {
+          const vid = w.visualId || (w.content && w.content.visualId);
+          if (!vid) continue;
+          const v = await fetch(`${CONFIG.composerApiUrl}/api/visuals/${vid}`, {headers: H}).then(r => r.json());
+          if (v.description) map[w.name] = v.description;
+        }
+      }
+    } catch (e) {
+      console.warn('visualDescription load failed, falling back to CONFIG.tooltips', e);
+    }
+    return map;
+  }
+
+  /* ───────────────────────────────────────────────
+     Hover tooltip layer.
+     Looks up Composer's native visualDescription first, falls back to the
+     CONFIG.tooltips copy for any widget the API didn't return a description
+     for. The fallback exists so a fresh dashboard with no descriptions still
+     gets sensible tooltips during demo prep.
+     ─────────────────────────────────────────────── */
+  function installTooltipLayer(visualDescriptions = {}) {
     const tip = document.getElementById('otto-tip');
     let activeFor = null;
 
     function findHint(text) {
       if (!text) return null;
       const t = text.trim();
-      // Exact match wins, then longest-substring match
+      // Try the live Composer description first (exact then longest substring)
+      if (visualDescriptions[t]) {
+        return {title: t, body: visualDescriptions[t], source: 'composer'};
+      }
+      const liveKeys = Object.keys(visualDescriptions).sort((a, b) => b.length - a.length);
+      for (const k of liveKeys) {
+        if (t.indexOf(k) !== -1) {
+          return {title: k, body: visualDescriptions[k], source: 'composer'};
+        }
+      }
+      // Fall back to bundled copy
       if (CONFIG.tooltips[t]) return CONFIG.tooltips[t];
       const keys = Object.keys(CONFIG.tooltips).sort((a, b) => b.length - a.length);
       for (const k of keys) {
