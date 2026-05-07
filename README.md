@@ -88,6 +88,24 @@ writes 403 for tenant admins, embed manager `theme: '<name>'` overrides
 per-visual palette, `.zd-main-header` empty rail squashes embeds, and so on),
 see `SCHEMA_NOTES.md`.
 
+## Companion agent
+
+The repo bundles a `bi-developer` subagent definition at
+`agents/bi-developer.md` — a Principal BI Developer with a phase-gated
+workflow (Frame → Sketch → Build → Verify → Hand-over) that refuses to
+write SQL until grain, conformed dimensions, and metric definitions are
+explicit. Designed to operate this MCP's tools natively. Install:
+
+```bash
+mkdir -p ~/.claude/agents
+cp agents/bi-developer.md ~/.claude/agents/
+# restart Claude Code
+```
+
+Then dispatch via `Agent(subagent_type: "bi-developer", ...)` or say
+"use the BI developer agent to...". See `agents/README.md` for project-
+scope install, customisation, and tool-pinning options.
+
 ## "Why is this 403/404/500?"
 
 When debugging, start at `LIMITATIONS.md`. It's the single canonical list of
