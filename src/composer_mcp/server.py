@@ -37,10 +37,12 @@ from .tools import (
     accounts,
     connections,
     dashboards,
+    diagnostics,
     discovery,
     embed,
     reports,
     sources,
+    templates,
     themes,
     tokens,
     visuals,
@@ -1047,6 +1049,192 @@ TOOLS: list[dict[str, Any]] = [
         ),
         "handler": lambda c, a: dashboards.test_dashboard_render(
             c, a["dashboard_id"], a.get("sample_rows", 5)
+        ),
+    },
+    # --- diagnostics ---
+    {
+        "name": "composer_health_check",
+        "description": (
+            "Sweep of read-only probes. Reports which capability classes "
+            "the calling principal can access, which gates apply, and a "
+            "verdict on the session's effective scope. Pass deep=true to "
+            "also try a render preview on a sample dashboard."
+        ),
+        "schema": _schema(
+            {"deep": {"type": "boolean", "default": False}},
+        ),
+        "handler": lambda c, a: diagnostics.health_check(c, a.get("deep", False)),
+    },
+    {
+        "name": "composer_whoami",
+        "description": (
+            "Identify the calling principal and current tenant scope. Useful "
+            "when the user has switched tenants and you need to confirm "
+            "before mutating."
+        ),
+        "schema": _schema({}),
+        "handler": lambda c, a: diagnostics.whoami(c),
+    },
+    # --- per-provider connection helpers ---
+    {
+        "name": "composer_create_snowflake_connection",
+        "description": (
+            "Create a Snowflake connection. Composer assembles the JDBC URL "
+            "from account locator + warehouse + db + schema + optional role."
+        ),
+        "schema": _schema(
+            {
+                "name": {"type": "string"},
+                "account": {"type": "string"},
+                "warehouse": {"type": "string"},
+                "database": {"type": "string"},
+                "schema": {"type": "string"},
+                "user": {"type": "string"},
+                "password": {"type": "string"},
+                "role": {"type": "string"},
+            },
+            ["name", "account", "warehouse", "database", "schema", "user", "password"],
+        ),
+        "handler": lambda c, a: connections.create_snowflake_connection(
+            c, a["name"], a["account"], a["warehouse"], a["database"],
+            a["schema"], a["user"], a["password"], a.get("role"),
+        ),
+    },
+    {
+        "name": "composer_create_bigquery_oauth_connection",
+        "description": (
+            "Create a BigQuery connection using OAuth (web client). MUST be a "
+            "Web OAuth client, not Desktop — Desktop only allows http://localhost "
+            "redirects. User completes the auth flow on first connect via UI."
+        ),
+        "schema": _schema(
+            {
+                "name": {"type": "string"},
+                "project_id": {"type": "string"},
+                "oauth_web_client_id": {"type": "string"},
+                "oauth_web_client_secret": {"type": "string"},
+                "dataset": {"type": "string"},
+            },
+            ["name", "project_id", "oauth_web_client_id", "oauth_web_client_secret"],
+        ),
+        "handler": lambda c, a: connections.create_bigquery_oauth_connection(
+            c, a["name"], a["project_id"],
+            a["oauth_web_client_id"], a["oauth_web_client_secret"],
+            a.get("dataset"),
+        ),
+    },
+    {
+        "name": "composer_create_bigquery_service_account_connection",
+        "description": (
+            "Create a BigQuery connection using a Service Account JSON key. "
+            "Headless — no OAuth click-through. Pass FULL JSON contents."
+        ),
+        "schema": _schema(
+            {
+                "name": {"type": "string"},
+                "project_id": {"type": "string"},
+                "service_account_json": {"type": "string"},
+                "dataset": {"type": "string"},
+            },
+            ["name", "project_id", "service_account_json"],
+        ),
+        "handler": lambda c, a: connections.create_bigquery_service_account_connection(
+            c, a["name"], a["project_id"], a["service_account_json"],
+            a.get("dataset"),
+        ),
+    },
+    {
+        "name": "composer_create_postgres_connection",
+        "description": (
+            "Create a Postgres connection. ssl_mode defaults to 'require' "
+            "for cloud Postgres (Supabase, Neon, RDS); use 'disable' for "
+            "local dev only."
+        ),
+        "schema": _schema(
+            {
+                "name": {"type": "string"},
+                "host": {"type": "string"},
+                "port": {"type": "integer", "default": 5432},
+                "database": {"type": "string"},
+                "user": {"type": "string"},
+                "password": {"type": "string"},
+                "ssl_mode": {"type": "string", "default": "require"},
+            },
+            ["name", "host", "database", "user", "password"],
+        ),
+        "handler": lambda c, a: connections.create_postgres_connection(
+            c, a["name"], a["host"], a.get("port", 5432),
+            a["database"], a["user"], a["password"],
+            a.get("ssl_mode", "require"),
+        ),
+    },
+    {
+        "name": "composer_create_databricks_connection",
+        "description": (
+            "Create a Databricks SQL Warehouse connection using a Personal "
+            "Access Token."
+        ),
+        "schema": _schema(
+            {
+                "name": {"type": "string"},
+                "host": {"type": "string"},
+                "http_path": {"type": "string"},
+                "token": {"type": "string"},
+                "catalog": {"type": "string"},
+                "schema": {"type": "string"},
+            },
+            ["name", "host", "http_path", "token"],
+        ),
+        "handler": lambda c, a: connections.create_databricks_connection(
+            c, a["name"], a["host"], a["http_path"], a["token"],
+            a.get("catalog"), a.get("schema"),
+        ),
+    },
+    {
+        "name": "composer_test_connection",
+        "description": "Ask Composer to attempt a live connection test.",
+        "schema": _schema(
+            {"connection_id": {"type": "string"}}, ["connection_id"]
+        ),
+        "handler": lambda c, a: connections.test_connection(c, a["connection_id"]),
+    },
+    # --- dashboard templates ---
+    {
+        "name": "composer_generate_snapshot_dashboard",
+        "description": (
+            "Build a UC1-style 'Today at a glance' snapshot dashboard from a "
+            "source: a campaign-type filter, a row of KPI tiles for the "
+            "named metrics (with Otto-style conditional formatting on ROAS), "
+            "and a bar+line trend chart. Skips KPIs whose underlying field "
+            "doesn't exist on the source rather than failing the build."
+        ),
+        "schema": _schema(
+            {
+                "source_id": {"type": "string"},
+                "name": {"type": "string"},
+                "description": {"type": "string"},
+                "kpis": {"type": "array", "items": {"type": "string"}},
+                "filter_field": {"type": "string", "default": "campaign_type"},
+                "trend_field": {"type": "string", "default": "date"},
+                "trend_y1": {"type": "array", "items": {"type": "string"}},
+                "trend_y2": {"type": "array", "items": {"type": "string"}},
+                "brand_color": {"type": "string", "default": "#E2001A"},
+                "secondary_color": {"type": "string", "default": "#1A1A1A"},
+            },
+            ["source_id", "name"],
+        ),
+        "handler": lambda c, a: templates.generate_snapshot_dashboard(
+            c,
+            a["source_id"],
+            a["name"],
+            a.get("description", ""),
+            a.get("kpis"),
+            a.get("filter_field", "campaign_type"),
+            a.get("trend_field", "date"),
+            tuple(a["trend_y1"]) if a.get("trend_y1") else ("sales_eur", "sum"),
+            tuple(a["trend_y2"]) if a.get("trend_y2") else ("ad_spend_eur", "sum"),
+            a.get("brand_color", "#E2001A"),
+            a.get("secondary_color", "#1A1A1A"),
         ),
     },
 ]

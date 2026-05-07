@@ -41,6 +41,33 @@ re-reading the skill each time.
   `embed/serve_nocache.py`): a working native-DOM embedding shell with
   hover tooltips, layout overrides, and the dev server config. Worked
   example end-to-end against UAT; see `EMBEDDING.md`
+- **Embed orchestration**: `make_embed_config` mints a fresh push token
+  and returns the full shell `CONFIG = { ... }` block ready to paste,
+  `verify_trusted_access_client` translates the opaque 500 (client not
+  registered) and 400 (account out of scope) into actionable diagnostics
+- **Row-level security**: `add_forced_filter` / `remove_forced_filters_for_sid`
+  for per-group, per-user, or attribute-interpolated forced filters with
+  `${User.<attr>}` push-token attribute resolution
+- **Cross-warehouse introspection**: `describe_source_joins` summarises
+  the join graph and tags sources as cross-warehouse; `validate_source_field_uniqueness`
+  catches the silent collision bug that causes Composer to fall back to
+  default content
+- **Pre-flight render test**: `test_dashboard_render` walks every widget
+  and reports per-widget pass/fail by hitting the data preview endpoint.
+  Catches placeholder-metric bindings before they embarrass you in front
+  of a customer
+- **Per-provider connection helpers**: Snowflake, BigQuery (both OAuth
+  and Service Account), Postgres, Databricks. Composer's generic
+  create_connection works but you have to know each provider's parameter
+  shape; these wrap them with the verified-good defaults
+- **Diagnostics**: `health_check` sweeps every read-only probe and reports
+  which capability classes the calling principal can access plus which
+  permission gates apply. `whoami` confirms identity + tenant scope
+- **Dashboard templates**: `generate_snapshot_dashboard` produces a
+  UC1-style "Today at a glance" dashboard from any source — campaign-type
+  filter, KPI tile row with conditional formatting on ROAS, and a
+  bar+line trend chart. Skips KPIs whose underlying field is missing
+  rather than failing the build
 
 The server enforces the non-negotiable Composer quirks documented in the
 skill:
