@@ -88,6 +88,22 @@ writes 403 for tenant admins, embed manager `theme: '<name>'` overrides
 per-visual palette, `.zd-main-header` empty rail squashes embeds, and so on),
 see `SCHEMA_NOTES.md`.
 
+## "Why is this 403/404/500?"
+
+When debugging, start at `LIMITATIONS.md`. It's the single canonical list of
+what this MCP **does not** wrap, with the failure mode, the root cause, and
+the workaround for each. Categorised by:
+
+* **Hard limits gated by role** (Trusted Access client registration, theme
+  content writes, account enumeration) — needs Symphony global admin
+* **Hard limits not exposed in v25** (reference lines, saved views, visual
+  sharing) — needs a future Composer release
+* **Embed manager limits** (theme override behaviour, visual config cache,
+  cross-tab filter isolation, zero-height widget bug) — properties of
+  `embed.js`, no REST API call would fix them
+* **Schema gotchas** (works, but only if you know the trick) — table
+  cross-referencing each gotcha to the MCP helper that wraps it
+
 ## Quick start
 
 ```bash

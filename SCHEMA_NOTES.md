@@ -4,6 +4,10 @@ Every entry below is something we hit at runtime against UAT and had to work
 out from error messages or by diffing what the UI sent. Documented so the next
 person doesn't burn the same hour.
 
+> **Looking for "what can't I do?"** — see `LIMITATIONS.md`. This file is
+> the schema reference (shapes, field names, gotchas). LIMITATIONS.md is
+> the failure-mode decision tree.
+
 ## Authentication
 
 * Standalone Composer (`/composer`) accepts Basic auth on every endpoint.

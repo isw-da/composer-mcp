@@ -4,6 +4,13 @@ The Composer Embed Manager (`/embed/embed.js`) renders dashboards as native
 DOM, not iframes. That's the whole point: your CSS can reach in, your
 keyboard navigation works, your fonts apply, no `X-Frame-Options` games.
 
+> **Embed not behaving as expected?** — see the "Embed manager limits"
+> section of `LIMITATIONS.md` first. Theme override beats per-visual
+> palette, embed caches visual configs against the push-token session,
+> cross-tab filter state doesn't sync, `display: none` produces zero-height
+> widgets — these are all known properties of `embed.js`, not bugs in your
+> shell.
+
 This doc captures the working pattern (verified end-to-end against UAT for
 the Otto Group "Partner Center" demo). The full reference shell lives at
 `embed/otto-opc-shell.html.template` in this repo.
