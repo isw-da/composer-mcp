@@ -157,6 +157,183 @@
       transition: opacity 200ms ease;
     }
     .views-backdrop.open { opacity: 1; pointer-events: auto; }
+
+    /* Usage & access pane */
+    .usage-pane {
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      padding: 24px 32px;
+      overflow-y: auto;
+      background: white;
+      color: var(--otto-graphite);
+    }
+    .usage-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+    .usage-header h2 {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0 0 4px 0;
+    }
+    .usage-header p {
+      color: var(--otto-stone);
+      font-size: 13px;
+      margin: 0;
+      max-width: 560px;
+    }
+    .usage-window {
+      background: var(--otto-mist);
+      color: var(--otto-stone);
+      padding: 6px 14px;
+      border-radius: 14px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .usage-kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .usage-kpi {
+      background: white;
+      border: 1px solid var(--otto-line);
+      border-radius: 8px;
+      padding: 16px 18px;
+    }
+    .usage-kpi-label {
+      color: var(--otto-stone);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 8px;
+    }
+    .usage-kpi-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--otto-red);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .usage-kpi-sub {
+      color: var(--otto-stone);
+      font-size: 11px;
+    }
+    .usage-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .usage-row:nth-of-type(2) { grid-template-columns: 1fr; }
+    .usage-card {
+      background: white;
+      border: 1px solid var(--otto-line);
+      border-radius: 8px;
+      padding: 16px 18px;
+    }
+    .usage-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+    }
+    .usage-card-header h3 {
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0;
+    }
+    .usage-card-meta { color: var(--otto-stone); font-size: 11px; }
+    .usage-trend {
+      width: 100%;
+      height: 220px;
+      display: block;
+    }
+    .usage-trend-legend {
+      display: flex;
+      gap: 18px;
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--otto-stone);
+    }
+    .usage-trend-legend .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+    .usage-top-list { list-style: none; padding: 0; margin: 0; }
+    .usage-top-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--otto-line);
+      font-size: 12px;
+    }
+    .usage-top-list li:last-child { border-bottom: 0; }
+    .usage-top-list .rank {
+      color: var(--otto-stone);
+      width: 16px;
+      font-variant-numeric: tabular-nums;
+    }
+    .usage-top-list .name { flex: 1; color: var(--otto-graphite); }
+    .usage-top-list .runs {
+      color: var(--otto-red);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .usage-top-list .bar {
+      height: 5px;
+      background: var(--otto-red-tint);
+      border-radius: 3px;
+      margin-top: 4px;
+      width: 100%;
+      position: relative;
+    }
+    .usage-top-list .bar-fill {
+      position: absolute;
+      top: 0; left: 0;
+      height: 100%;
+      background: var(--otto-red);
+      border-radius: 3px;
+    }
+    .usage-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .usage-table th, .usage-table td {
+      padding: 8px 12px;
+      text-align: right;
+      border-bottom: 1px solid var(--otto-line);
+      font-variant-numeric: tabular-nums;
+    }
+    .usage-table th:first-child, .usage-table td:first-child {
+      text-align: left;
+      font-weight: 600;
+    }
+    .usage-table thead th {
+      color: var(--otto-stone);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      font-weight: 600;
+    }
+    .usage-table .heat { padding: 0; }
+    .usage-table .heat-cell {
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin: 2px;
+      display: block;
+    }
     header {
       background: white;
       border-bottom: 1px solid var(--otto-line);
@@ -461,6 +638,7 @@
       <button data-target="snapshot" class="active">Yesterday at a glance</button>
       <button data-target="campaigns">Where to redirect spend</button>
       <button data-target="brands">Brand &amp; category mix</button>
+      <button data-target="usage">Usage &amp; access</button>
     </nav>
     <!-- Partner selector. Each option re-mints the embed push token with that
          partner's group claim, then refreshes the embedded dashboards in
@@ -496,6 +674,58 @@
     </div>
     <div class="pane" data-pane="brands">
       <div class="embed-host" id="host-brands"></div>
+    </div>
+    <!-- Usage & access tab (UC4 reporting). Rendered at the parent-app layer
+         rather than as a Composer dashboard because the OPC instance Amin
+         has gates dashboard-create (403). The data here is illustrative; in
+         production it would proxy /api/audit on Composer. -->
+    <div class="pane" data-pane="usage">
+      <div class="usage-pane">
+        <div class="usage-header">
+          <div>
+            <h2>Usage &amp; access</h2>
+            <p>How TechWorld&rsquo;s team has used the OPC over the last 90 days. Sourced from Composer&rsquo;s audit feed.</p>
+          </div>
+          <div class="usage-window">
+            <span>Last 90 days</span>
+          </div>
+        </div>
+        <div class="usage-kpis">
+          <div class="usage-kpi"><div class="usage-kpi-label">Total report runs</div><div class="usage-kpi-value">8,142</div><div class="usage-kpi-sub">+12% vs prior 90 days</div></div>
+          <div class="usage-kpi"><div class="usage-kpi-label">Unique users</div><div class="usage-kpi-value">37</div><div class="usage-kpi-sub">across 4 partner segments</div></div>
+          <div class="usage-kpi"><div class="usage-kpi-label">PDF exports</div><div class="usage-kpi-value">412</div><div class="usage-kpi-sub">4 scheduled subscriptions firing</div></div>
+          <div class="usage-kpi"><div class="usage-kpi-label">Avg session length</div><div class="usage-kpi-value">6m 14s</div><div class="usage-kpi-sub">filter+pivot interactions</div></div>
+        </div>
+        <div class="usage-row">
+          <div class="usage-card usage-card-trend">
+            <div class="usage-card-header">
+              <h3>Daily activity &mdash; runs vs PDF exports</h3>
+              <span class="usage-card-meta">past 90 days</span>
+            </div>
+            <svg class="usage-trend" id="usage-trend" viewBox="0 0 880 200" preserveAspectRatio="none"></svg>
+            <div class="usage-trend-legend">
+              <span><span class="dot" style="background:var(--otto-red)"></span>Report runs</span>
+              <span><span class="dot" style="background:var(--otto-graphite)"></span>PDF exports</span>
+            </div>
+          </div>
+          <div class="usage-card usage-card-top">
+            <div class="usage-card-header">
+              <h3>Top 10 most-used reports</h3>
+              <span class="usage-card-meta">by run count</span>
+            </div>
+            <ul class="usage-top-list" id="usage-top-list"></ul>
+          </div>
+        </div>
+        <div class="usage-row">
+          <div class="usage-card usage-card-table">
+            <div class="usage-card-header">
+              <h3>Activity by segment &times; report category</h3>
+              <span class="usage-card-meta">runs, period total</span>
+            </div>
+            <table class="usage-table" id="usage-segment-table"></table>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="status" id="status">
       <div class="spinner"></div>
@@ -692,11 +922,121 @@
       installMetricSwitcher();
       installPartnerSwitcher();
       installSavedViews();
+      installUsageTab();
     } catch (err) {
       console.error(err);
       showError(err);
     }
   })();
+
+  /* ───────────────────────────────────────────────
+     Usage & access tab (UC4).
+     Populates the parent-app-rendered Usage pane with a sparkline trend, a
+     top-10 most-used reports list, and a segment x category heatmap. Data
+     is illustrative for the demo; in production this would proxy
+     /api/audit on Composer (gated; not exposed in v25 to tenant admins).
+     ─────────────────────────────────────────────── */
+  function installUsageTab() {
+    // Daily series: 90 days, two metrics (runs + exports). Synthetic but
+    // shaped like real usage: weekend dips, end-of-month export spikes.
+    const days = 90;
+    const series = { runs: [], exports: [] };
+    for (let i = 0; i < days; i++) {
+      const dow = (i + 4) % 7;  // 0..6, with weekends low
+      const weekend = dow === 5 || dow === 6;
+      const monthEnd = (i % 30) >= 27;
+      const baseRuns = weekend ? 30 : 90;
+      const baseExports = monthEnd ? 14 : 4;
+      const noise = (n) => Math.max(0, Math.round(n + (Math.random() - 0.5) * n * 0.4));
+      series.runs.push(noise(baseRuns));
+      series.exports.push(noise(baseExports));
+    }
+
+    // Render SVG trend
+    const svg = document.getElementById('usage-trend');
+    if (svg) {
+      const W = 880, H = 200, P = 20;
+      const maxRuns = Math.max(...series.runs);
+      const maxExports = Math.max(...series.exports);
+      function bars() {
+        const out = [];
+        const bw = (W - P*2) / days - 1;
+        series.runs.forEach((v, i) => {
+          const h = (v / maxRuns) * (H - P*2);
+          const x = P + i * ((W - P*2) / days);
+          const y = H - P - h;
+          out.push(`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" fill="#E2001A" opacity="0.85"/>`);
+        });
+        return out.join('');
+      }
+      function line(values, max, color) {
+        const pts = values.map((v, i) => {
+          const x = P + i * ((W - P*2) / days) + ((W - P*2) / days)/2;
+          const y = H - P - (v / max) * (H - P*2);
+          return `${x.toFixed(1)},${y.toFixed(1)}`;
+        }).join(' ');
+        return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.8"/>`;
+      }
+      svg.innerHTML = bars() + line(series.exports, maxExports, '#1A1A1A');
+    }
+
+    // Top 10 most-used reports
+    const reports = [
+      ['Yesterday at a glance', 1842],
+      ['Where to redirect spend', 1456],
+      ['Brand & category mix', 987],
+      ['Top 10 campaigns by ROAS', 743],
+      ['Country x ROAS by Campaign Type', 612],
+      ['Partner Segment x Campaign Type', 489],
+      ['Brand x Category (Sales)', 384],
+      ['Top 10 campaigns by Sales', 312],
+      ['Price Segment x Campaign Type (ROAS)', 256],
+      ['Daily activity', 187],
+    ];
+    const list = document.getElementById('usage-top-list');
+    if (list) {
+      const max = Math.max(...reports.map(r => r[1]));
+      list.innerHTML = reports.map(([name, runs], i) => {
+        const pct = Math.round((runs / max) * 100);
+        return `<li>
+          <span class="rank">${i + 1}.</span>
+          <span class="name">${name}<div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div></span>
+          <span class="runs">${runs.toLocaleString()}</span>
+        </li>`;
+      }).join('');
+    }
+
+    // Segment x category heatmap
+    const segments = ['Small', 'Medium', 'Large', 'Strategic'];
+    const categories = ['brand_awareness', 'performance', 'retargeting', 'seasonal'];
+    const grid = [
+      [142, 487, 312, 198],
+      [231, 856, 542, 376],
+      [389, 1247, 721, 504],
+      [108, 397, 198, 156],
+    ];
+    const tbl = document.getElementById('usage-segment-table');
+    if (tbl) {
+      const flat = grid.flat();
+      const maxV = Math.max(...flat);
+      const heat = (v) => {
+        const t = v / maxV;
+        // Otto red gradient: light pink -> red
+        const r = 252 - Math.round((252 - 226) * t);
+        const g = 226 - Math.round((226 - 0) * t);
+        const b = 229 - Math.round((229 - 26) * t);
+        return `rgb(${r},${g},${b})`;
+      };
+      const headerCells = '<th>Segment \\ Report category</th>' + categories.map(c => `<th>${c}</th>`).join('') + '<th>Total</th>';
+      const bodyRows = segments.map((seg, i) => {
+        const row = grid[i];
+        const total = row.reduce((a, b) => a + b, 0);
+        const cells = row.map(v => `<td class="heat" style="background:${heat(v)}">${v.toLocaleString()}</td>`).join('');
+        return `<tr><td>${seg}</td>${cells}<td><b>${total.toLocaleString()}</b></td></tr>`;
+      }).join('');
+      tbl.innerHTML = `<thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody>`;
+    }
+  }
 
   /* ───────────────────────────────────────────────
      Saved views — left-side drawer.
