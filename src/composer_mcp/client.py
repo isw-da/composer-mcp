@@ -47,9 +47,9 @@ class ComposerError(RuntimeError):
 
 _MUTATING_METHODS = {"POST", "PUT", "DELETE", "PATCH"}
 
-# Hard guardrails added 2026-05-07 after locking amin.hasan out of UAT
-# by mutating his own user record via the trusted-access push token. See
-# SAFETY.md at the repo root for the full incident.
+# Hard guardrails added 2026-05-07 after locking admin.synced out of the
+# instance by mutating his own user record via the trusted-access push token.
+# See SAFETY.md at the repo root for the full incident.
 
 # 1) Refuse to mutate /api/users/{id} when {id} matches the running
 #    session's userId. The legitimate use case (a user editing their
@@ -68,7 +68,7 @@ class MdrEndpointBlocked(RuntimeError):
     """Raised when something tries to call a /managed/* (MDR) endpoint.
 
     Per the 2026-05-07 incident: composer-mcp is VDD-only. MDR endpoints
-    are a footgun (see SAFETY.md, Glyn McKenna's June 2025 email) and we
+    are a footgun (see SAFETY.md, the June 2025 warning email) and we
     don't drive them from automation. If you genuinely need MDR, do it
     manually with a fresh CLI / curl + a documented one-shot session.
     """
@@ -78,7 +78,7 @@ class SelfUserMutationBlocked(RuntimeError):
     """Raised when a write would mutate the running session's own user record.
 
     Specifically: PUT/PATCH/DELETE on `/api/users/{runningUserId}`. This is
-    how amin.hasan locked himself out on 2026-05-07.
+    how admin.synced locked himself out on 2026-05-07.
     """
 
 
@@ -222,7 +222,7 @@ class ComposerClient:
                     raise SelfUserMutationBlocked(
                         f"Refusing {method} on /api/users/{target_id} because "
                         f"that is the running session's own user id. This is "
-                        f"how amin.hasan locked himself out on 2026-05-07. "
+                        f"how admin.synced locked himself out on 2026-05-07. "
                         f"See SAFETY.md."
                     )
 

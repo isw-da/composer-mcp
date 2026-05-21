@@ -37,10 +37,10 @@ re-reading the skill each time.
   `Bar Color.colorConfig.colors` shape (entries must be `{name, color}`,
   not bare strings). `set_kpi_conditional_format` for RedYellowGreen
   thresholding on KPI tiles
-- **Embedding reference** (`embed/otto-opc-shell.html.template` plus
+- **Embedding reference** (`embed/partner-shell.html.template` plus
   `embed/serve_nocache.py`): a working native-DOM embedding shell with
   hover tooltips, layout overrides, and the dev server config. Worked
-  example end-to-end against UAT; see `EMBEDDING.md`
+  example end-to-end against a Composer instance; see `EMBEDDING.md`
 - **Embed orchestration**: `make_embed_config` mints a fresh push token
   and returns the full shell `CONFIG = { ... }` block ready to paste,
   `verify_trusted_access_client` translates the opaque 500 (client not
@@ -193,7 +193,7 @@ value and the `<meta name="_csrf">` content from a logged-in browser tab and
 pass both via env vars. Mutations get `X-CSRF-TOKEN` added automatically.
 
 ```bash
-COMPOSER_BASE=https://uat.logi-symphony.com \
+COMPOSER_BASE=https://<composer-host> \
 COMPOSER_CONTEXT_PATH=/discovery \
 COMPOSER_SESSION_COOKIE='<SESSION cookie value>' \
 COMPOSER_CSRF_TOKEN='<_csrf meta value>' \
@@ -264,7 +264,7 @@ from composer_mcp.tools import sources
 
 # 1. Probe each entity for native fields
 perf_fields = await sources.describe_entity(client, sf_conn_id, "PUBLIC", "DAILY_PERFORMANCE")
-attrs_fields = await sources.describe_entity(client, bq_conn_id, "agile-tracker-403309.otto_demo", "article_attributes")
+attrs_fields = await sources.describe_entity(client, bq_conn_id, "<project>.<dataset>", "article_attributes")
 
 # 2. Convert to source-create shape and dedupe collisions
 entities = [
@@ -282,7 +282,7 @@ body = {
              "singleCollection": {"connectionId": sf_conn_id, "schema": "PUBLIC", "collection": "DAILY_PERFORMANCE"},
              "nativeFields": deduped[0]},
             {"id": "attrs", "name": "Article Attributes", "type": "SINGLE_COLLECTION",
-             "singleCollection": {"connectionId": bq_conn_id, "schema": "agile-tracker-403309.otto_demo", "collection": "article_attributes"},
+             "singleCollection": {"connectionId": bq_conn_id, "schema": "<project>.<dataset>", "collection": "article_attributes"},
              "nativeFields": deduped[1]},
         ],
         "joins": [{
@@ -385,7 +385,7 @@ Time-token reference: `+$start_of_data`, `+$end_of_data`,
 from composer_mcp.tools import accounts
 
 # 1. Create the tenant (note the AccountUserResource shape)
-acct = await accounts.create_account(client, name="Otto")
+acct = await accounts.create_account(client, name="Acme Partners")
 
 # 2. Add yourself as a member, then promote to admin (member-then-admin order
 #    matters — the admin PUT validates membership)

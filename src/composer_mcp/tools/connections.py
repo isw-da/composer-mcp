@@ -186,7 +186,7 @@ async def create_bigquery_oauth_connection(
     the connection record. Use `create_bigquery_service_account_connection`
     for headless setups instead.
 
-    `project_id` is the GCP project (e.g. `agile-tracker-403309`).
+    `project_id` is the GCP project (e.g. `<project>`).
     `dataset` is optional but lets you scope the connection at create time.
     """
     params = {

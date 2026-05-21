@@ -9,7 +9,7 @@ every other user from that tenant. Same shape applies to `add_admins_to_account`
 and the dashboard ACL bulk update. Always read first, modify the list in
 memory, then write back the full list.
 
-This is the same class of bug that wiped amin.hasan's VDD admin roles
+This is the same class of bug that wiped admin.synced's VDD admin roles
 on 2026-05-07 (different endpoint, same root cause: not enforcing
 read-modify-write on overwrite-style endpoints). See SAFETY.md.
 
@@ -28,11 +28,11 @@ Lessons from real bundled-Symphony usage:
   admin. Sending only the admin add returns 400 with "User X doesn't belong
   to account Y".
 
-* Cross-tenant user moves are gated. amin's `ROLE_ADMINISTER_USERS` within
-  Otto is sufficient to add amin himself, but is NOT sufficient to import a
-  user record that belongs to a different tenant. That requires a
-  Symphony-wide super-admin (Global Administrator). Global users like Peter
-  Armstrong already have implicit access to every tenant and don't need to
+* Cross-tenant user moves are gated. A tenant admin's `ROLE_ADMINISTER_USERS`
+  within their own tenant is sufficient to add themselves, but is NOT
+  sufficient to import a user record that belongs to a different tenant. That
+  requires a Symphony-wide super-admin (Global Administrator). Global users
+  already have implicit access to every tenant and don't need to
   be added explicitly.
 
 * `GET /api/user/switch/{accountId}` switches the active tenant context for

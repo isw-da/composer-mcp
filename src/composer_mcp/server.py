@@ -181,7 +181,7 @@ TOOLS: list[dict[str, Any]] = [
             {
                 "name": {"type": "string"},
                 "connection_id": {"type": "string"},
-                "schema": {"type": "string", "description": "Database schema name (e.g. 'opc')"},
+                "schema": {"type": "string", "description": "Database schema name (e.g. 'sales')"},
                 "table": {"type": "string", "description": "Table or view name (e.g. 'v_combined_metrics')"},
                 "description": {"type": "string", "default": ""},
             },
@@ -545,7 +545,7 @@ TOOLS: list[dict[str, Any]] = [
         "description": (
             "Mint a push token impersonating a user. Used for embedded scenarios "
             "and for UC4 'replicate partner view' troubleshooting. `account` is "
-            "the literal tenant display name including spaces (e.g. 'Otto Group'), "
+            "the literal tenant display name including spaces (e.g. 'Acme Partners'), "
             "NOT the slug or UUID. `groups` is the field the renderer uses for "
             "forced-filter scoping."
         ),
@@ -788,7 +788,7 @@ TOOLS: list[dict[str, Any]] = [
         "description": (
             "Mint a fresh push token and assemble a ready-to-paste config for "
             "the Composer Embed Manager shell. Returns a dict with the same "
-            "shape as the CONFIG block in embed/otto-opc-shell.html.template, "
+            "shape as the CONFIG block in embed/partner-shell.html.template, "
             "plus a `_token` field with the minted access_token + expires_in "
             "for backend-relayed embeds. NB: the output contains the trusted-"
             "access secret — fine for local-dev shells, do not commit."
@@ -1204,7 +1204,7 @@ TOOLS: list[dict[str, Any]] = [
         "description": (
             "Build a UC1-style 'Today at a glance' snapshot dashboard from a "
             "source: a campaign-type filter, a row of KPI tiles for the "
-            "named metrics (with Otto-style conditional formatting on ROAS), "
+            "named metrics (with brand-style conditional formatting on ROAS), "
             "and a bar+line trend chart. Skips KPIs whose underlying field "
             "doesn't exist on the source rather than failing the build."
         ),
@@ -1218,7 +1218,7 @@ TOOLS: list[dict[str, Any]] = [
                 "trend_field": {"type": "string", "default": "date"},
                 "trend_y1": {"type": "array", "items": {"type": "string"}},
                 "trend_y2": {"type": "array", "items": {"type": "string"}},
-                "brand_color": {"type": "string", "default": "#E2001A"},
+                "brand_color": {"type": "string", "default": "#2563EB"},
                 "secondary_color": {"type": "string", "default": "#1A1A1A"},
             },
             ["source_id", "name"],
@@ -1233,7 +1233,7 @@ TOOLS: list[dict[str, Any]] = [
             a.get("trend_field", "date"),
             tuple(a["trend_y1"]) if a.get("trend_y1") else ("sales_eur", "sum"),
             tuple(a["trend_y2"]) if a.get("trend_y2") else ("ad_spend_eur", "sum"),
-            a.get("brand_color", "#E2001A"),
+            a.get("brand_color", "#2563EB"),
             a.get("secondary_color", "#1A1A1A"),
         ),
     },

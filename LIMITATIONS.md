@@ -2,7 +2,7 @@
 
 Single canonical list of things this MCP **does not** wrap, with the reason
 and (where one exists) the workaround. Every entry below has been verified
-empirically against UAT during the Otto Group UC1 build.
+empirically against a Composer instance during a cross-warehouse build.
 
 When debugging "why is this 403/404/500?", check here before assuming you've
 got a code bug.
@@ -63,7 +63,7 @@ hours before we found the workaround.
 * **Trigger:** Source-level Row Security rule with
   `<col> INCLUDE ${User.<attr>}` (or any operator) when `<col>` exists
   in only one of the joined entities of a cross-warehouse source.
-  Otto's Snowflake `Partners` ⋈ BigQuery `Article Attributes` joined
+  A Snowflake `Partners` ⋈ BigQuery `Article Attributes` joined
   source hits this every time. Repro reduced from the rule alone with
   a TEXT column; doesn't require interpolation to fail.
 * **Workaround:** Don't apply the rule on cross-warehouse sources at
@@ -79,10 +79,10 @@ hours before we found the workaround.
   but no query ever fires. Spinners forever.
 * **Trigger:** Mint a push token for a user whose `userOrigin` is
   `TA_PUSH` and who has no MDR-side counterpart. Reproduced against
-  `otto.embed` and `demo.otto_admin` even after granting them the
+  `ta.embed` and `demo.admin` even after granting them the
   full role bag (Administrators / Supervisors / Content Distributors
   → 32 roles) and READ + DATA_ACCESS at user and account level.
-* **Compare:** `amin.hasan` (also `userOrigin: TA_PUSH` but MDR-synced
+* **Compare:** `admin.synced` (also `userOrigin: TA_PUSH` but MDR-synced
   from a real Symphony Global Administrator account) works on the
   same tokens with the same body shape.
 * **Workaround:** Run all embed sessions as one MDR-synced user
@@ -179,9 +179,9 @@ These are properties of the `embed.js` runtime, not of the REST API. No API
 call would fix them.
 
 ### Theme override beats per-visual palette
-* **Symptom:** You set `Bar Color` on a UBER_BARS visual to Otto red, the
-  visual renders red in Composer's standalone view, but the embed shows
-  the default rainbow palette.
+* **Symptom:** You set `Bar Color` on a UBER_BARS visual to the brand
+  colour, the visual renders in that colour in Composer's standalone view,
+  but the embed shows the default rainbow palette.
 * **Why:** When `createComponent({theme: '<custom>'})` is passed, the
   named theme's `customProperties.charts.*` palette overrides per-visual
   palette at render time.
@@ -295,7 +295,7 @@ helper rather than reinventing.
 * `WRITEBACK_ODATA.md` — upload write-back and the OData read API
 * `THEMES.md` / `CALCULATIONS.md` / `PYTHON_CONNECTOR.md` — theme JSON, the
   calculation function language, and Python data sources
-* `embed/otto-opc-shell.html.template` — the working reference shell
+* `embed/partner-shell.html.template` — the working reference shell
 * `embed/serve_nocache.py` — dev server that won't fight your iteration
 * This file (`LIMITATIONS.md`) — the "I'm getting an error and want to
   know if it's me or Composer" decision tree

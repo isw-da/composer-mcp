@@ -11,9 +11,9 @@ keyboard navigation works, your fonts apply, no `X-Frame-Options` games.
 > widgets — these are all known properties of `embed.js`, not bugs in your
 > shell.
 
-This doc captures the working pattern (verified end-to-end against UAT for
-the Otto Group "Partner Center" demo). The full reference shell lives at
-`embed/otto-opc-shell.html.template` in this repo.
+This doc captures the working pattern (verified end-to-end against a Composer
+instance for the Acme Partner Portal demo). The full reference shell lives at
+`embed/partner-shell.html.template` in this repo.
 
 ## TL;DR — let the MCP do it
 
@@ -23,14 +23,14 @@ If you just want a working config block to paste into the shell:
 composer_make_embed_config(
   client_id="<from Symphony admin>",
   secret="<from Symphony admin>",
-  account="Otto Group",                # literal display name
+  account="Acme Partners",             # literal display name
   username="tenant.viewer",
   dashboard_ids={
-    "snapshot":  "7d498e0c-c75c-4089-b851-b88875b89432_69fba5090b70396702ebb36e",
-    "campaigns": "7d498e0c-c75c-4089-b851-b88875b89432_69fba50a0b70396702ebb371",
-    "brands":    "7d498e0c-c75c-4089-b851-b88875b89432_69fba50a0b70396702ebb374",
+    "snapshot":  "<accountId>_<snapshotDashId>",
+    "campaigns": "<accountId>_<campaignsDashId>",
+    "brands":    "<accountId>_<brandsDashId>",
   },
-  groups=["TechWorld GmbH"],
+  groups=["Contoso Ltd"],
   theme="__platform__",
 )
 ```
@@ -87,7 +87,7 @@ diagnostics rather than making you guess.
    shared-anonymous patterns, or pass the real partner username for
    personalised forced filters.
 3. The **target account display name** verbatim. Spaces and case matter.
-   `'Otto Group'`, not `'otto-group'`.
+   `'Acme Partners'`, not `'acme-partners'`.
 4. The **dashboard id in `+` form**: `<accountId>+<dashId>`. The URL form
    uses `_` separator; rewrite to `+` for the embed manager.
 
@@ -96,7 +96,7 @@ diagnostics rather than making you guess.
 When `createComponent({theme: '<name>'})` is called, Composer applies the
 named theme's `customProperties.charts.*` palette OVER per-visual palette
 settings. So if you carefully recoloured `Bar Color` on every UBER_BARS
-visual to Otto red, those edits are ignored at render time and the bars
+visual to the brand colour, those edits are ignored at render time and the bars
 render in the theme's palette (default modern is yellow → teal → blue).
 
 Three ways out:
@@ -201,7 +201,7 @@ document.addEventListener('mouseover', (e) => {
 }, true);
 ```
 
-The Otto shell uses a `CONFIG.tooltips` map keyed by widget title with
+The partner shell uses a `CONFIG.tooltips` map keyed by widget title with
 substring matching (longest key wins). One-line edits to add new tooltip
 copy without touching Composer. Reference implementation in
-`embed/otto-opc-shell.html.template`.
+`embed/partner-shell.html.template`.

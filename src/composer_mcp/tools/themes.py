@@ -25,7 +25,7 @@ the embedding app (see `embed/README.md`).
 Embed-time theme passing
 ------------------------
 The Composer Embed Manager `createComponent('dashboard', { theme })` accepts
-either a theme name (`'otto'`, `'modern'`, `'__platform__'`) or theme id.
+either a theme name (`'brand'`, `'modern'`, `'__platform__'`) or theme id.
 When you pass a custom theme its content overrides per-visual palette
 settings — so visuals you carefully recoloured may not actually repaint
 in the embed. If you want per-visual configs to win, pass

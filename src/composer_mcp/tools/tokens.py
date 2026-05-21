@@ -4,7 +4,7 @@
 
 The trusted-access PUSH endpoint is a CREATE-OR-OVERWRITE primitive.
 On every call it writes a full user record server-side, replacing whatever
-was there. **Any field you don't set gets cleared.** Glyn McKenna's June
+was there. **Any field you don't set gets cleared.** A colleague's June 2025
 email spelled this out and warned against using it inside Logi Symphony
 because it bypasses MDR (the source of truth) and silently desyncs the
 user from the Symphony admin's view.
@@ -14,8 +14,8 @@ What this means in practice:
 * Pushing a token for the user the script is RUNNING AS will overwrite
   that user's groups + roles + custom attributes with the (likely
   partial) payload you send. Worst case: you strip your own admin and
-  lock yourself out of the platform. (This happened to amin.hasan on
-  2026-05-07. Took an admin restore from Leo to recover.)
+  lock yourself out of the platform. (This happened to admin.synced on
+  2026-05-07. Took an admin restore from a global admin to recover.)
 
 * The `roles` parameter is silently ignored on token issuance but still
   participates in the overwrite. We removed it from this wrapper; do not
@@ -40,13 +40,13 @@ has SSO context. Read-only — safe to call against any existing user.
 Schema notes (verified against UAT, Composer v25):
 
 * `account` is the literal display name of the tenant, INCLUDING spaces.
-  Example: `'Otto Group'`, not `'otto-group'` or the account UUID. Probing
-  the slug returns `400 invalid_request: account: <slug> does not exist`
-  even when the tenant is real.
+  Example: `'Acme Partners'`, not `'acme-partners'` or the account UUID.
+  Probing the slug returns `400 invalid_request: account: <slug> does not
+  exist` even when the tenant is real.
 
 * `groups` is the field the API actually reads for forced-filter group
   scoping. Pass groups when you want widget-level filters
-  (e.g. `["TechWorld GmbH"]`).
+  (e.g. `["Contoso Ltd"]`).
 
 * The Trusted Access *client* (clientId + secret used in the Basic Auth
   header) must be registered AND scoped to the target account by a
@@ -55,7 +55,7 @@ Schema notes (verified against UAT, Composer v25):
   session.
 
 * Theme writes are also gated: `PUT /api/customization/themes/{id}` returns
-  403 from amin's tenant-admin session, even for a theme that tenant
+  403 from a tenant-admin session, even for a theme that tenant
   created. Use `themes.list_themes` / `themes.get_theme` for the read side
   and ask Symphony ops for any palette changes.
 """
@@ -68,7 +68,7 @@ from ..client import ComposerClient
 class SelfMutationBlocked(RuntimeError):
     """Raised when a write would overwrite the running session's own user record.
 
-    This is the safety guard Amin earned the hard way on 2026-05-07.
+    This is the safety guard earned the hard way on 2026-05-07.
     See the module docstring above and SAFETY.md.
     """
 
@@ -104,7 +104,7 @@ async def mint_push_token(
                 unless `allow_self=True` is passed explicitly. Self-overwrites
                 have wiped admin roles in the past.
       account:  tenant display name verbatim (with spaces, mixed case).
-      groups:   forced-filter groups, e.g. `["TechWorld GmbH"]`.
+      groups:   forced-filter groups, e.g. `["Contoso Ltd"]`.
       attributes: array-of-string format, e.g. `{"partner_id": ["P_007"]}`.
       allow_self: opt-in escape hatch. Only set this if you have explicitly
                   reasoned through the risk and the call is part of a
@@ -112,7 +112,7 @@ async def mint_push_token(
 
     The `roles` parameter has been removed deliberately. The Composer server
     silently ignores it on issuance but still participates in the overwrite,
-    which is how amin.hasan lost their admin roles in May 2026. If you think
+    which is how admin.synced lost their admin roles in May 2026. If you think
     you need roles, you almost certainly want MDR's `/managed/API/Logon` with
     `accountProperties.groupMembership` instead.
     """
@@ -123,7 +123,7 @@ async def mint_push_token(
                 f"Refusing to mint a push token for '{username}' because that "
                 f"is the running session's own user. This call would overwrite "
                 f"your own roles/groups/attributes server-side, which is "
-                f"how amin.hasan locked themselves out on 2026-05-07. "
+                f"how admin.synced locked themselves out on 2026-05-07. "
                 f"If you genuinely need this (full-payload restore from a "
                 f"trusted backup), pass `allow_self=True` and own the risk."
             )
