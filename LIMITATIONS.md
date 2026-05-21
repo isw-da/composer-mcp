@@ -2,7 +2,7 @@
 
 Single canonical list of things this MCP **does not** wrap, with the reason
 and (where one exists) the workaround. Every entry below has been verified
-empirically against UAT during the Otto Group UC1 build.
+empirically against a Composer instance during a cross-warehouse build.
 
 When debugging "why is this 403/404/500?", check here before assuming you've
 got a code bug.
@@ -63,7 +63,7 @@ hours before we found the workaround.
 * **Trigger:** Source-level Row Security rule with
   `<col> INCLUDE ${User.<attr>}` (or any operator) when `<col>` exists
   in only one of the joined entities of a cross-warehouse source.
-  Otto's Snowflake `Partners` ⋈ BigQuery `Article Attributes` joined
+  A Snowflake `Partners` ⋈ BigQuery `Article Attributes` joined
   source hits this every time. Repro reduced from the rule alone with
   a TEXT column; doesn't require interpolation to fail.
 * **Workaround:** Don't apply the rule on cross-warehouse sources at
@@ -79,10 +79,10 @@ hours before we found the workaround.
   but no query ever fires. Spinners forever.
 * **Trigger:** Mint a push token for a user whose `userOrigin` is
   `TA_PUSH` and who has no MDR-side counterpart. Reproduced against
-  `otto.embed` and `demo.otto_admin` even after granting them the
+  `ta.embed` and `demo.admin` even after granting them the
   full role bag (Administrators / Supervisors / Content Distributors
   → 32 roles) and READ + DATA_ACCESS at user and account level.
-* **Compare:** `amin.hasan` (also `userOrigin: TA_PUSH` but MDR-synced
+* **Compare:** `admin.synced` (also `userOrigin: TA_PUSH` but MDR-synced
   from a real Symphony Global Administrator account) works on the
   same tokens with the same body shape.
 * **Workaround:** Run all embed sessions as one MDR-synced user
@@ -179,9 +179,9 @@ These are properties of the `embed.js` runtime, not of the REST API. No API
 call would fix them.
 
 ### Theme override beats per-visual palette
-* **Symptom:** You set `Bar Color` on a UBER_BARS visual to Otto red, the
-  visual renders red in Composer's standalone view, but the embed shows
-  the default rainbow palette.
+* **Symptom:** You set `Bar Color` on a UBER_BARS visual to the brand
+  colour, the visual renders in that colour in Composer's standalone view,
+  but the embed shows the default rainbow palette.
 * **Why:** When `createComponent({theme: '<custom>'})` is passed, the
   named theme's `customProperties.charts.*` palette overrides per-visual
   palette at render time.
@@ -220,6 +220,49 @@ call would fix them.
   synthetic `resize` event to wake any deferred render paths. See
   `EMBEDDING.md` for the canonical pattern.
 
+## Open embed issues tracked in Jira
+
+Live Composer embed defects (not API limits, not shell bugs) confirmed in Jira
+as of 2026-05-21. Check the ticket for current status before you spend time
+debugging; the workaround is what was known at the time.
+
+### Double-click on Save / Save as can create duplicate reports
+* **Ticket:** ZP-28872 (Composer v25.4.2)
+* **Symptom:** Clicking Save as on an embedded dashboard (not inside the
+  Composer web app) and double-clicking the button can create duplicate reports.
+* **Workaround:** Debounce or disable your own Save / Save-as control after the
+  first click in the embed shell.
+
+### Visual Builder embed breaks when a sourceId is passed
+* **Ticket:** ZP-28728
+* **Symptom:** The visual-builder embed component breaks when a `sourceId` is
+  passed alongside `interactivityOverrides`.
+* **Note:** Use the nested `interactivityOverrides` schema (`settings` /
+  `visualSettings`), not the flat map. See `EMBEDDING_RUNTIME.md`.
+
+### OR filters do not apply as initialFilters
+* **Ticket:** ZP-28398
+* **Symptom:** `initialFilters` with an OR `applyFiltersStrategy` passed to
+  `embedManager.createComponent` does not filter as expected.
+* **Workaround:** Apply the filter at the data layer (per-visual
+  `source.filters`) or via the runtime publish methods in
+  `EMBEDDING_RUNTIME.md`.
+
+### logi-embed npm package is missing token refresh
+* **Ticket:** ZP-28831
+* **Symptom:** The `logi-embed` npm package does not include the token-refresh
+  behaviour that `window.initComposerEmbedManager` provides, so TypeScript
+  integrations using the package lose silent re-auth.
+* **Workaround:** Wire your own `getToken` refresh, or use the script-tag
+  `window.initComposerEmbedManager` path until the package reaches parity.
+
+### WebSocket console warnings on embedded reports
+* **Ticket:** ZP-28487
+* **Symptom:** WebSocket warning and error messages appear in the browser
+  console on embedded reports; reproducible on the public playground too.
+* **Note:** Cosmetic in the cases observed; it does not block rendering. Don't
+  chase it as your own bug.
+
 ## Schema gotchas (works, but only if you know the trick)
 
 These DO work via the MCP — they're documented here so you know to use the
@@ -246,7 +289,13 @@ helper rather than reinventing.
   "off-by-one in a JSON shape" details
 * `EMBEDDING.md` — the seven-step embed flow with the shell CSS overrides
   block ready to copy
-* `embed/otto-opc-shell.html.template` — the working reference shell
+* `EMBEDDING_RUNTIME.md` — driving the embed after boot: filter passing, event
+  capture, modal embeds, interactivity overrides, export interception
+* `CHATBOT_EMBED.md` — embedding the Simba Intelligence NLQ chatbot
+* `WRITEBACK_ODATA.md` — upload write-back and the OData read API
+* `THEMES.md` / `CALCULATIONS.md` / `PYTHON_CONNECTOR.md` — theme JSON, the
+  calculation function language, and Python data sources
+* `embed/partner-shell.html.template` — the working reference shell
 * `embed/serve_nocache.py` — dev server that won't fight your iteration
 * This file (`LIMITATIONS.md`) — the "I'm getting an error and want to
   know if it's me or Composer" decision tree

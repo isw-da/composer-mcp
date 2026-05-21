@@ -51,7 +51,7 @@ async def generate_snapshot_dashboard(
     trend_field: str | None = "date",
     trend_y1: tuple[str, str] | None = ("sales_eur", "sum"),
     trend_y2: tuple[str, str] | None = ("ad_spend_eur", "sum"),
-    brand_color: str = "#E2001A",
+    brand_color: str = "#2563EB",
     secondary_color: str = "#1A1A1A",
 ) -> dict:
     """Build the UC1 "Today at a glance" snapshot dashboard.

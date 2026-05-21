@@ -158,7 +158,7 @@ async def make_embed_config(
     The output normalises to embed form.
 
     Returns a dict with the same shape as the `CONFIG = { ... }` block in
-    `embed/otto-opc-shell.html.template`:
+    `embed/partner-shell.html.template`:
 
       {
         "composerApiUrl": "...",

@@ -37,10 +37,10 @@ re-reading the skill each time.
   `Bar Color.colorConfig.colors` shape (entries must be `{name, color}`,
   not bare strings). `set_kpi_conditional_format` for RedYellowGreen
   thresholding on KPI tiles
-- **Embedding reference** (`embed/otto-opc-shell.html.template` plus
+- **Embedding reference** (`embed/partner-shell.html.template` plus
   `embed/serve_nocache.py`): a working native-DOM embedding shell with
   hover tooltips, layout overrides, and the dev server config. Worked
-  example end-to-end against UAT; see `EMBEDDING.md`
+  example end-to-end against a Composer instance; see `EMBEDDING.md`
 - **Embed orchestration**: `make_embed_config` mints a fresh push token
   and returns the full shell `CONFIG = { ... }` block ready to paste,
   `verify_trusted_access_client` translates the opaque 500 (client not
@@ -87,6 +87,24 @@ the literal display name not the slug, `Bar Color.colors` entries need
 writes 403 for tenant admins, embed manager `theme: '<name>'` overrides
 per-visual palette, `.zd-main-header` empty rail squashes embeds, and so on),
 see `SCHEMA_NOTES.md`.
+
+## Documentation
+
+Companion reference docs in this repo, by topic.
+
+Build side (REST API):
+- `SCHEMA_NOTES.md`: per-visual-type JSON schema and the "off by one in a JSON shape" details
+- `LIMITATIONS.md`: what the v25 API can't do, with workarounds and the "is it me or Composer?" decision tree
+- `CALCULATIONS.md`: the calculated-field function language (Window, Table and Other functions)
+- `THEMES.md`: theme JSON schema, the four KPI palettes, and the theme-authoring gotchas
+- `PYTHON_CONNECTOR.md`: using Python as a Composer data source
+- `SAFETY.md`: client-level guards that stop the MCP locking you out of your own account
+
+Embed and runtime (client side):
+- `EMBEDDING.md`: get a dashboard on screen (token, boot, shell CSS)
+- `EMBEDDING_RUNTIME.md`: drive it after boot (host-to-dashboard filter passing, event capture for product analytics, modal/drawer embeds, interactivity overrides, export interception, reading visible data)
+- `CHATBOT_EMBED.md`: embed the Simba Intelligence NLQ chatbot through the same embed manager
+- `WRITEBACK_ODATA.md`: write back to upload-backed sources, and expose source data to third-party BI via the OData API
 
 ## Companion agent
 
@@ -175,7 +193,7 @@ value and the `<meta name="_csrf">` content from a logged-in browser tab and
 pass both via env vars. Mutations get `X-CSRF-TOKEN` added automatically.
 
 ```bash
-COMPOSER_BASE=https://uat.logi-symphony.com \
+COMPOSER_BASE=https://<composer-host> \
 COMPOSER_CONTEXT_PATH=/discovery \
 COMPOSER_SESSION_COOKIE='<SESSION cookie value>' \
 COMPOSER_CSRF_TOKEN='<_csrf meta value>' \
@@ -246,7 +264,7 @@ from composer_mcp.tools import sources
 
 # 1. Probe each entity for native fields
 perf_fields = await sources.describe_entity(client, sf_conn_id, "PUBLIC", "DAILY_PERFORMANCE")
-attrs_fields = await sources.describe_entity(client, bq_conn_id, "agile-tracker-403309.otto_demo", "article_attributes")
+attrs_fields = await sources.describe_entity(client, bq_conn_id, "<project>.<dataset>", "article_attributes")
 
 # 2. Convert to source-create shape and dedupe collisions
 entities = [
@@ -264,7 +282,7 @@ body = {
              "singleCollection": {"connectionId": sf_conn_id, "schema": "PUBLIC", "collection": "DAILY_PERFORMANCE"},
              "nativeFields": deduped[0]},
             {"id": "attrs", "name": "Article Attributes", "type": "SINGLE_COLLECTION",
-             "singleCollection": {"connectionId": bq_conn_id, "schema": "agile-tracker-403309.otto_demo", "collection": "article_attributes"},
+             "singleCollection": {"connectionId": bq_conn_id, "schema": "<project>.<dataset>", "collection": "article_attributes"},
              "nativeFields": deduped[1]},
         ],
         "joins": [{
@@ -367,7 +385,7 @@ Time-token reference: `+$start_of_data`, `+$end_of_data`,
 from composer_mcp.tools import accounts
 
 # 1. Create the tenant (note the AccountUserResource shape)
-acct = await accounts.create_account(client, name="Otto")
+acct = await accounts.create_account(client, name="Acme Partners")
 
 # 2. Add yourself as a member, then promote to admin (member-then-admin order
 #    matters — the admin PUT validates membership)

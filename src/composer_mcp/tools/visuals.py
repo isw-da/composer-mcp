@@ -220,11 +220,11 @@ def make_bar_color_palette(
 ) -> list[dict]:
     """Build a `Bar Color` variable value with a custom palette.
 
-    `colors` is a plain list of hex strings (e.g. `['#FCE2E5', '#E2001A',
-    '#A00012']`) — this helper wraps each into the `{name, color}` shape
+    `colors` is a plain list of hex strings (e.g. `['#E0E7FF', '#2563EB',
+    '#1E40AF']`) — this helper wraps each into the `{name, color}` shape
     Composer requires.
     """
-    palette = colors or ["#E2001A"]
+    palette = colors or ["#2563EB"]
     return [
         {
             "name": metric_name,

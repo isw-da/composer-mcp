@@ -26,8 +26,8 @@ person doesn't burn the same hour.
   scoping.
 * `account` is the literal tenant display name, **including spaces and case**.
   Probing the slug returns `400 invalid_request: account: <slug> does not
-  exist` even when the tenant exists. Confirmed: `'Otto Group'` works,
-  `'otto-group'` and the UUID both fail.
+  exist` even when the tenant exists. Confirmed: `'Acme Partners'` works,
+  `'acme-partners'` and the UUID both fail.
 * Trusted Access *clients* (the clientId+secret in the Basic Auth header)
   must be registered AND scoped to the target account by a Symphony global
   admin. Tenant admins cannot register clients themselves: `POST
@@ -44,7 +44,7 @@ person doesn't burn the same hour.
   `{account: {name, disabled}, users: []}`. Sending `{name}` directly is
   silently accepted but the tenant won't show up in the admin list.
 * Tenants created via the UI have UUID-format ids
-  (`7d498e0c-c75c-4089-b851-b88875b89432`); tenants created via API have
+  (`00000000-0000-4000-8000-000000000000`); tenants created via API have
   ObjectId-format ids. The UI tenant list filters out ObjectId-format ids,
   so API-created tenants are invisible in the admin UI.
 * `GET /api/user/switch/{accountId}` switches the active tenant context for
@@ -207,7 +207,7 @@ Wrappers in `tools/sources.py`: `list_forced_filters`, `add_forced_filter`,
 `remove_forced_filters_for_sid`, `clear_forced_filters`.
 
 **Two failure modes to know about**, both verified live on 2026-05-08
-during the Otto Group cross-warehouse build (Snowflake fact + BigQuery
+during a cross-warehouse build (Snowflake fact + BigQuery
 dim joined in one source). The textbook pattern above silently breaks
 when these conditions are met.
 
@@ -247,11 +247,11 @@ sync) cannot run queries through the embed even when they hold:
 
 Symptom: dashboard chrome renders, visual configs fetch, then no
 query ever fires. Spinners forever. The same tokens used by an
-MDR-synced user (e.g. `amin.hasan` who exists on both sides) work
-fine. Verified by minting tokens for `otto.embed` and
-`demo.otto_admin` (TA_PUSH only) versus `amin.hasan` (MDR-synced)
+MDR-synced user (e.g. `admin.synced` who exists on both sides) work
+fine. Verified by minting tokens for `ta.embed` and
+`demo.admin` (TA_PUSH only) versus `admin.synced` (MDR-synced)
 with identical bodies and identical /api/user/permissions responses
-— only amin loaded data.
+— only the MDR-synced user loaded data.
 
 Fix: run all personas as one MDR-synced user underneath. Differentiate
 personas via the data filter, not via swapping users (see C).
@@ -268,7 +268,7 @@ The shape that actually filters data at query time is **`value`
 ```
 [{path: "partner_name",
   operation: "IN",
-  value: ["Otto Tech", "Bergen Tech"]}]
+  value: ["Contoso Ltd", "Fabrikam AG"]}]
 ```
 
 `values` (plural) is accepted by PUT but Composer strips the array
@@ -287,7 +287,7 @@ Per-persona switch flow:
    against the push-token session" in `LIMITATIONS.md`).
 
 Working reference: `embed/serve_nocache.py`'s `/api/persona` endpoint
-ships this proxy. The Otto-OPC shell calls it on persona switch.
+ships this proxy. The partner shell calls it on persona switch.
 
 #### What does NOT work for per-persona narrowing (don't waste time)
 
@@ -313,7 +313,7 @@ ships this proxy. The Otto-OPC shell calls it on persona switch.
   /api/sources/import?accountId=<targetTenant>&enableDefaultRead=true`.
   The export preserves encrypted connection passwords across tenants.
 * BigQuery schema must be `project.dataset` format, e.g.
-  `agile-tracker-403309.otto_demo`.
+  `<project>.<dataset>`.
 * BigQuery OAuth: web client (not desktop). Desktop clients only allow
   `http://localhost` redirect URIs.
 

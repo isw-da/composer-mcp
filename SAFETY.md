@@ -2,25 +2,25 @@
 
 This file exists because on 2026-05-07 I (Claude, driving composer-mcp via
 Amin's session) wiped Amin Hasan's admin roles in UAT Logi Symphony by
-calling endpoints I shouldn't have. Recovery required Leo Carlin to manually
-re-add Amin as a Global Administrator.
+calling endpoints I shouldn't have. Recovery required a global administrator
+to manually re-add Amin as a Global Administrator.
 
 This document is the permanent learning artefact. Read it before working
 with any user-mutation code in this repo.
 
 ## What happened
 
-While debugging an "embed dashboards aren't loading" symptom in the Otto
-Partner Center demo shell, I called:
+While debugging an "embed dashboards aren't loading" symptom in the Acme
+Partner Portal demo shell, I called:
 
 1. `PUT /api/users/{aminId}` with a payload that omitted Amin's existing
    role memberships in Visual Data Discovery. The endpoint behaves as
    POST-overwrite (silently strips unset fields), so this cleared the
    33 admin roles he had in VDD.
 
-2. `POST /api/trusted-access/push/tokens` with `{username: "amin.hasan",
+2. `POST /api/trusted-access/push/tokens` with `{username: "admin.synced",
    roles: [...]}` against Amin's own username. This created/refreshed
-   a TA_PUSH-origin shadow record for amin.hasan in VDD with empty
+   a TA_PUSH-origin shadow record for admin.synced in VDD with empty
    roles + empty groups, which the discovery API then preferred over
    the MDR-sourced record. Net effect: every subsequent /api/user call
    resolved to the empty ghost.
@@ -37,9 +37,9 @@ even when navigating directly.
 
 ## The two warnings I should have heeded
 
-### Glyn McKenna's June 2025 email
+### A colleague's June 2025 email
 
-Glyn explicitly wrote (forwarded to Amin by Peter Armstrong on this
+A colleague explicitly wrote (forwarded to Amin by a teammate on this
 same day, before I made the mistake):
 
 > "I don't recommend using this endpoint when working with Logi Symphony
@@ -75,7 +75,7 @@ I should have generalised that lesson to push tokens.
   to use it.
 - Module docstring leads with the danger.
 
-### `client.py` (added in v0.5.1, after Trevor's bootstrap-admin recovery)
+### `client.py` (added in v0.5.1, after the bootstrap-admin recovery)
 
 - `_enforce_guards()` runs on every request. Two hard rules:
   1. **MDR endpoints are blocked.** Any path starting with `/managed`
@@ -99,10 +99,10 @@ I should have generalised that lesson to push tokens.
 
 ## How to provision users inside Logi Symphony
 
-Per Glyn: use **MDR's long-form Logon** at
+Per that email: use **MDR's long-form Logon** at
 `POST /managed/API/Logon` with `accountProperties` populated. MDR is
 the source of truth; it pushes to VDD automatically with the full
-payload, so nothing gets stripped. Example body in Glyn's email,
+payload, so nothing gets stripped. Example body in that email,
 saved at `/Users/aminhasan/composer-mcp/agents/` if needed.
 
 Do not provision Symphony users via VDD push tokens. Do not "fix"
@@ -135,11 +135,11 @@ the user's role-bearing VDD groups in EVERY push body. Composer
 overwrites the user's group memberships on each push, so the body
 must always carry the full set you want to keep.
 
-In the Otto-OPC shell:
+In the partner shell:
 
 ```js
 const CONFIG = {
-  sharedUsername: 'amin.hasan',
+  sharedUsername: 'admin.synced',
   preserveGroups: ['Administrators', 'Supervisors', 'Content Distributors'],
   // ...
 };
@@ -213,7 +213,7 @@ curl -s -X POST \
   -d '{"options":{}}' -o /tmp/mig.json
 
 # 3. Inspect the per-user message for the broken account
-jq '.messages[] | select(.name=="amin.hasan")' /tmp/mig.json
+jq '.messages[] | select(.name=="admin.synced")' /tmp/mig.json
 # Look for "Migration succeeded" and the "user membership in the
 # following groups is updated" line listing the restored groups.
 
@@ -230,7 +230,7 @@ specific user before celebrating or panicking.
 
 ### Per-persona row narrowing via the proxy + `visual.source.filters`
 
-Added 2026-05-08 after the Otto Group UC4 build burned ~6 hours
+Added 2026-05-08 after an embed build burned ~6 hours
 walking into three independent Composer bugs trying to do per-persona
 RLS the textbook way. The path that actually works is documented in
 `SCHEMA_NOTES.md` "Forced filters" section (B+C); this block is the
@@ -238,7 +238,7 @@ RLS the textbook way. The path that actually works is documented in
 
 The setup:
 
-* One MDR-synced underlying user (`amin.hasan` in the Otto demo). All
+* One MDR-synced underlying user (`admin.synced` in the demo). All
   personas mint push tokens against this user, with `preserveGroups`
   carrying the role bag.
 * No source-level Row Security rule active for that user. (Leave
@@ -300,7 +300,7 @@ sel.addEventListener('change', async () => {
 Working reference shipping in this repo:
 * `embed/serve_nocache.py` — proxy + dev server with `Cache-Control:
   no-store` on every response
-* `embed/otto-opc-shell.html.template` — full shell with persona
+* `embed/partner-shell.html.template` — full shell with persona
   switcher wired
 
 ### What burned the hours (so you don't repeat it)

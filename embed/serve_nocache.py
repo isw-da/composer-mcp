@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dev server for the Otto-OPC embed shell.
+"""Dev server for the partner embed shell.
 
 Two responsibilities:
 
@@ -10,9 +10,9 @@ Two responsibilities:
    shell HTML cache is the last thing we want fighting iteration too.
 
 2. Expose `POST /api/persona` — a per-persona forced-filter proxy.
-   Takes `{partner_csv: "Otto Tech,Bergen Tech,..."}` and PUTs
+   Takes `{partner_csv: "Contoso Ltd,Fabrikam AG,..."}` and PUTs
    `source.filters` on every widget visual on the consolidated
-   dashboard server-side. Empty CSV clears filters (Otto Admin →
+   dashboard server-side. Empty CSV clears filters (the admin persona →
    sees all partners).
 
    Why a proxy and not a browser-side mutation:
@@ -49,7 +49,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 # Override these per environment. The credentials never leave the server;
 # the browser sees only `/api/persona` as a same-origin POST.
 COMPOSER_BASE = os.environ.get(
-    "COMPOSER_BASE", "https://uat.logi-symphony.com/discovery"
+    "COMPOSER_BASE", "https://<composer-host>/discovery"
 )
 ADMIN_USER    = os.environ.get("COMPOSER_ADMIN_USER", "admin")
 ADMIN_PASS    = os.environ.get("COMPOSER_ADMIN_PASS", "<set-me>")
