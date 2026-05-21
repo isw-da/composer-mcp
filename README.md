@@ -88,6 +88,24 @@ writes 403 for tenant admins, embed manager `theme: '<name>'` overrides
 per-visual palette, `.zd-main-header` empty rail squashes embeds, and so on),
 see `SCHEMA_NOTES.md`.
 
+## Documentation
+
+Companion reference docs in this repo, by topic.
+
+Build side (REST API):
+- `SCHEMA_NOTES.md`: per-visual-type JSON schema and the "off by one in a JSON shape" details
+- `LIMITATIONS.md`: what the v25 API can't do, with workarounds and the "is it me or Composer?" decision tree
+- `CALCULATIONS.md`: the calculated-field function language (Window, Table and Other functions)
+- `THEMES.md`: theme JSON schema, the four KPI palettes, and the theme-authoring gotchas
+- `PYTHON_CONNECTOR.md`: using Python as a Composer data source
+- `SAFETY.md`: client-level guards that stop the MCP locking you out of your own account
+
+Embed and runtime (client side):
+- `EMBEDDING.md`: get a dashboard on screen (token, boot, shell CSS)
+- `EMBEDDING_RUNTIME.md`: drive it after boot (host-to-dashboard filter passing, event capture for product analytics, modal/drawer embeds, interactivity overrides, export interception, reading visible data)
+- `CHATBOT_EMBED.md`: embed the Simba Intelligence NLQ chatbot through the same embed manager
+- `WRITEBACK_ODATA.md`: write back to upload-backed sources, and expose source data to third-party BI via the OData API
+
 ## Companion agent
 
 The repo bundles a `bi-developer` subagent definition at
