@@ -61,6 +61,25 @@ weak-model artefact; it is intrinsic to one-shot LLM query generation.
    taking the majority converts mostly-right into reliably-right, with no model
    change. It cannot rescue a consistently-wrong answer (see drawbacks).
 
+## Source shape by question class
+
+A lookup when scoping a model. Pick the source shape from the question shape;
+the grain follows. Anonymised examples taken from a competitive PoV.
+
+| Question class | Worked example | Source shape | Why |
+|---|---|---|---|
+| **Simple-lookup count** | "How many branches" | Single-entity. The dimension on its own, no join. | A join sample-aggregates the dimension; the count is wrong unless the dimension stands alone. |
+| **Aggregate measure** | "Total successful value" | Multi-entity. One fact joined to the conformed dimension, plus a named metric. | One fact per source. The named metric is the single source of truth. |
+| **Ranked measure** | "Top branches by successful value" | Same as aggregate; sort and limit at query time. | The agent picks the named metric and orders it. Its job is to select, not compose. |
+| **Grouped count with filter** | "Enabled branches per region" | Single-entity dimension with the grouping column and status field on the same table; status mapped to plain values via a derived field. | Counting goes through the single-entity rule. The grouping column and the domain synonym both live on the same hub. |
+| **Single-figure aggregate over many** | "Average successful value per branch" | Multi-entity, plus a named metric that returns one figure rather than a row per branch. | If the metric is not defined to roll up to a single figure, the agent returns a row per branch. Right data, wrong shape. |
+| **Domain-synonym question** | "How many active branches" (no `active` column) | Derived field mapping raw codes to plain values, plus Field Metadata synonyms. | The agent does not guess what your word means. Teach it once in the source and the question resolves at once. |
+| **Out-of-data question** | "EBITDA" (not in our data) | No source, no synthetic mapping. | A refusal is correct. If a plausible field is left findable, the agent will grab it. Trim the corpus. |
+
+The rule that drops out: **shape is set by the grain of the data, not by
+guessing which question someone will ask.** The same model handles a count and
+a measure correctly because the dimension and the facts stay apart.
+
 ## The retrieval cap
 
 The agent counts by retrieving rows (capped around 8,000) and counting them, so
