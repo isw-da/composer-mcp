@@ -1,0 +1,32 @@
+[
+  {
+    "img": "/abs/path/to/slides/01_title.png",
+    "label": "Title - one sentence on why",
+    "section": "Open",
+    "text": "This walkthrough shows how the platform meets the brief. Three role profiles, the data-handling controls, and the no-leak gate the customer set out as a pass or fail."
+  },
+  {
+    "img": "/abs/path/to/slides/02_roadmap.png",
+    "label": "Roadmap - agenda",
+    "section": "Open",
+    "text": "Here is the agenda. The three profiles in the brief. Groups and test users. The per-source pattern, step by step. Function-bounded scope and the carve-outs. And then the gate test, live, as a bounded user."
+  },
+  {
+    "img": "/abs/path/to/slides/03_roadmap_part1.png",
+    "label": "Roadmap - Part 1",
+    "section": "Part 1 - Profiles",
+    "text": "First, the three profiles. A full-read administrator, a region-bounded user, and a function-bounded user. We wire each one in turn."
+  },
+  {
+    "img": "/abs/path/to/slides/04_profiles_card.png",
+    "label": "D+A card - profiles described",
+    "section": "Part 1 - Profiles",
+    "text": "The administrator is the control case. The region-bounded user sees only their region's data, and any national aggregate scopes to their slice. The function-bounded user sees only the sources their function needs. Out of domain, the agent refuses honestly, rather than pivoting to a different answer."
+  },
+  {
+    "img": "/abs/path/to/slides/05_groups_screen.png",
+    "label": "SI - Groups tab, three gov groups",
+    "section": "Part 2 - Groups and users",
+    "text": "In Users and Groups, three new governance groups. Same admin, region, function shape as the brief."
+  }
+]
