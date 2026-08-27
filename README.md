@@ -229,9 +229,16 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ```bash
 .venv/bin/python -m tests.smoke
+.venv/bin/python -m tests.test_theme_palette
 ```
 
 The smoke test runs `composer_introspect` against the configured instance.
+
+`test_theme_palette` needs no instance. It runs
+`composer_describe_theme_palette` over two themes that shipped to customers
+(`tests/fixtures/`) and fails if the tool stops resolving their named
+palette — the shape lives at `content.variables.colors`, not
+`content.colors`.
 
 ## Tools
 

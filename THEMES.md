@@ -32,7 +32,7 @@ hover/active/disabled/background states), and so on. Other entries reference
 these as `$colors.brandColor`.
 
 `variables.palettes` carries the chart palettes: `DefaultSequential` (keyed
-by series count 2-9) and the four mandatory KPI palettes below.
+by series count 2-9) and, optionally, the four KPI palettes below.
 
 `customProperties` sections you will touch most: `dashboard.*`, `widget.*`,
 `navbar.*`, `charts.base.*`, `charts.KPI.*`, `charts.{TYPE}.*`,
@@ -72,11 +72,17 @@ unstyled dashboards.
 Always verify the write landed: re-read the theme and confirm `content` is
 non-empty.
 
-## KPI palettes (the four mandatory ones)
+## KPI palettes (the four)
 
-Every theme must include four KPI palettes under `variables.palettes`. KPI
-visuals use them through Conditional Formatting rules to colour tile
-backgrounds and metric text by performance.
+Four KPI palettes live under `variables.palettes`. KPI visuals use them
+through Conditional Formatting rules to colour tile backgrounds and metric
+text by performance.
+
+They are not mandatory. The deployed Tetra Pak theme ships
+`palettes: ['DefaultSequential']` alone and renders fine; KPI conditional
+formatting simply has nothing to offer in that theme. Include all four if
+you want performance colouring, and treat any of them as absent when
+reading someone else's theme.
 
 | Palette | Applied to | Direction |
 |---|---|---|

@@ -5,15 +5,18 @@ Each theme has an `id`, a `name`, a `masterThemeId` (e.g. `'modern'`,
 `'composer'`, `'dark'`, `'__platform__'`), and a `content` blob with two
 top-level halves:
 
-* `colors` — the named palette (`brandColor`, `surface`, `onPrimary`,
-  `intentPrimary`, ...).
+* `variables` — the design tokens. `variables.colors` is the named palette
+  (`brandColor`, `surface`, `onPrimary`, `intentPrimary`, ...) and
+  `variables.palettes` the chart palettes. Older themes put the named
+  palette at `content.colors` instead; both are read here.
 * `customProperties` — per-component overrides keyed by component name.
   The interesting ones for dashboards:
   * `customProperties.charts.KPI.{Background Color, Metric Color, Label Color, ...}`
   * `customProperties.charts.LINE_AND_BARS.{Y1 Color, Y2 Color}`
   * `customProperties.charts.UBER_BARS.{Bar Color}`
   * `customProperties.charts.PIVOT_TABLE.*`
-  * `customProperties.colorPalette.colors` — the categorical palette
+  * `customProperties.colorPalette` — palette-picker chrome, NOT the
+    categorical palette (that is `variables.palettes`)
 
 Write access is gated. PUT/PATCH/POST against `/api/customization/themes`
 returns 403 from a tenant-admin session even on tenant-owned themes. So
@@ -65,12 +68,16 @@ async def get_theme(client: ComposerClient, theme_id: str) -> dict:
 async def describe_theme_palette(client: ComposerClient, theme_id: str) -> dict:
     """Convenience: pull just the parts of a theme that drive chart colour."""
     t = await get_theme(client, theme_id)
-    cp = (t.get("content") or {}).get("customProperties", {})
+    content = t.get("content") or {}
+    cp = content.get("customProperties") or {}
+    variables = content.get("variables") or {}
     return {
         "id": t.get("id"),
         "name": t.get("name"),
         "masterThemeId": t.get("masterThemeId"),
-        "colors": (t.get("content") or {}).get("colors"),
+        # Current themes carry the named palette under `variables`;
+        # `content.colors` is the older layout.
+        "colors": variables.get("colors") or content.get("colors"),
         "colorPalette": cp.get("colorPalette"),
         "charts": cp.get("charts"),
     }

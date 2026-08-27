@@ -1,0 +1,1148 @@
+{
+  "name": "tetra-pak-modern",
+  "content": {
+    "customProperties": {
+      "about": {
+        "background": "$colors.brandColor",
+        "color": "$colors.text",
+        "colorSecondary": "$colors.muted",
+        "copyright": "$colors.muted"
+      },
+      "aceEditor": {
+        "aceAutocomplete": {
+          "background": "$colors.surface",
+          "border": "$colors.border",
+          "item": {
+            "active": {
+              "background": "$colors.intentBaseActive",
+              "color": "$colors.text"
+            },
+            "background": "$colors.surface",
+            "color": "$colors.text",
+            "hover": {
+              "background": "rgba(203, 213, 224, 0.4)",
+              "color": "$colors.text"
+            },
+            "matchingValueColor": "$colors.intentPrimary",
+            "metaColor": "$colors.muted"
+          }
+        },
+        "codeArea": {
+          "activeLine": {
+            "background": "$colors.intentBaseDisabled",
+            "color": "$colors.text"
+          },
+          "background": "$colors.surface",
+          "border": "$colors.border",
+          "color": "$colors.text",
+          "gutter": {
+            "activeLine": {
+              "background": "$colors.backgroundVariant",
+              "color": "$colors.text"
+            },
+            "background": "$colors.intentBaseDisabled",
+            "color": "$colors.text"
+          }
+        }
+      },
+      "alert": {
+        "danger": {
+          "color": "$colors.text",
+          "iconColor": "$colors.intentDanger",
+          "titleColor": "$colors.primary"
+        },
+        "none": {
+          "color": "$colors.text",
+          "iconColor": "initial",
+          "titleColor": "$colors.primary"
+        },
+        "primary": {
+          "color": "$colors.text",
+          "iconColor": "$colors.intentPrimary",
+          "titleColor": "$colors.primary"
+        },
+        "success": {
+          "color": "$colors.text",
+          "iconColor": "$colors.intentSuccess",
+          "titleColor": "$colors.primary"
+        },
+        "warning": {
+          "color": "$colors.text",
+          "iconColor": "$colors.intentWarning",
+          "titleColor": "$colors.primary"
+        }
+      },
+      "buttons": {
+        "base": {
+          "active": {
+            "bg": "$colors.intentBaseActive"
+          },
+          "bg": "$colors.intentBase",
+          "color": "$colors.text",
+          "disabled": {
+            "bg": "$colors.intentBaseDisabled"
+          },
+          "hover": {
+            "bg": "$colors.intentBaseHover"
+          },
+          "iconColor": "$colors.intentMinimal"
+        },
+        "danger": {
+          "active": {
+            "bg": "$colors.intentDangerActive"
+          },
+          "bg": "$colors.intentDanger",
+          "color": "$colors.onPrimary",
+          "disabled": {
+            "bg": "$colors.intentDangerDisabled"
+          },
+          "hover": {
+            "bg": "$colors.intentDangerHover"
+          }
+        },
+        "minimal": {
+          "active": {
+            "bg": "$colors.intentMinimalActive"
+          },
+          "bg": "initial",
+          "color": "$colors.onSurface",
+          "disabled": {
+            "color": "$colors.intentMinimalDisabled"
+          },
+          "hover": {
+            "bg": "$colors.intentMinimalHover",
+            "iconColor": "$colors.intentMinimal"
+          },
+          "iconColor": "$colors.intentMinimal"
+        },
+        "primary": {
+          "active": {
+            "bg": "$colors.intentPrimaryActive"
+          },
+          "bg": "$colors.intentPrimary",
+          "color": "$colors.onPrimary",
+          "disabled": {
+            "bg": "$colors.intentPrimaryDisabled"
+          },
+          "hover": {
+            "bg": "$colors.intentPrimaryHover"
+          }
+        },
+        "success": {
+          "active": {
+            "bg": "$colors.intentSuccessActive"
+          },
+          "bg": "$colors.intentSuccess",
+          "color": "$colors.onPrimary",
+          "disabled": {
+            "bg": "$colors.intentSuccessDisabled"
+          },
+          "hover": {
+            "bg": "$colors.intentSuccessHover"
+          }
+        },
+        "warning": {
+          "active": {
+            "bg": "$colors.intentWarningActive"
+          },
+          "bg": "$colors.intentWarning",
+          "color": "$colors.onPrimary",
+          "disabled": {
+            "bg": "$colors.intentWarningDisabled"
+          },
+          "hover": {
+            "bg": "$colors.intentWarningHover"
+          }
+        }
+      },
+      "calculationEditor": {
+        "helpPanel": {
+          "headerTitle": "$colors.primary",
+          "tdTextColor": "$colors.intentMinimal",
+          "trBackground": "$colors.surface"
+        }
+      },
+      "callout": {
+        "base": {
+          "bg": "$colors.backgroundVariant",
+          "color": "$colors.onBackgroundVariant"
+        },
+        "danger": {
+          "bg": "$colors.intentDangerBackground",
+          "color": "$colors.text"
+        },
+        "primary": {
+          "bg": "$colors.intentPrimaryBackground",
+          "color": "$colors.text"
+        },
+        "success": {
+          "bg": "$colors.intentSuccessBackground",
+          "color": "$colors.text"
+        },
+        "warning": {
+          "bg": "$colors.intentWarningBackground",
+          "color": "$colors.text"
+        }
+      },
+      "card": {
+        "background": "$colors.surface",
+        "borderColor": "$colors.border"
+      },
+      "chartLegend": {
+        "background": "$colors.background",
+        "color": "$colors.text"
+      },
+      "chartTooltip": {
+        "activeColor": "#0D1B2A",
+        "background": "$colors.surface",
+        "borderColor": "#DDE3EA",
+        "color": "$colors.text",
+        "mutedColor": "#8899A6"
+      },
+      "charts": {
+        "ARC": {
+          "Label Color": "#0D1B2A",
+          "Label Description Color": "#8899A6"
+        },
+        "BULLET_GAUGE": {
+          "Bar Color": "#084A8A",
+          "Target Color": "#063B6E"
+        },
+        "COMBO_CHART": {
+          "Y2 Color": "#EB2C33",
+          "Y3 Color": "#0F8B5A",
+          "Y4 Color": "#C7DAF0"
+        },
+        "HISTOGRAM": {
+          "Bins Color": "#084A8A",
+          "Cumulative Line Color": "#EB2C33"
+        },
+        "KPI": {
+          "Background Color": "#ffffff",
+          "Comparison Data Color": "#8899A6",
+          "Down Arrow Color": "#EB2C33",
+          "Label Color": "#4A5568",
+          "Metric Color": "#0D1B2A",
+          "Up Arrow Color": "#0F8B5A",
+          "labelEditor": {
+            "background": "$colors.backgroundVariant",
+            "button": {
+              "color": "#0D1B2A",
+              "hover": {
+                "background": "rgba(255, 255, 255, 0.7)"
+              }
+            },
+            "input": {
+              "background": "$colors.surface",
+              "color": "$colors.onSurface"
+            }
+          }
+        },
+        "LINE_AND_BARS": {
+          "Y1 Color": "#084A8A",
+          "Y2 Color": "#EB2C33"
+        },
+        "LINE_CHART": {
+          "palette": "DefaultQualitative"
+        },
+        "SCATTERPLOT": {
+          "pointerLabel": {
+            "background": "$colors.backgroundVariant",
+            "color": "$colors.onBackgroundVariant",
+            "shadowColor": "#CBD5E0"
+          }
+        },
+        "WATERFALL": {
+          "Total Color": "$colors.secondary",
+          "palette": "Accent"
+        },
+        "base": {
+          "axisLabelColor": "$colors.text",
+          "axisLabelShadow": "rgba(255, 255, 255, 0.0)",
+          "axisLineColor": "#CBD5E0",
+          "backgroundColor": "$colors.surface",
+          "color": "$colors.text",
+          "palette": "DefaultSequential",
+          "pointerColor": "$colors.text",
+          "splitLineColor": "$colors.border"
+        }
+      },
+      "checkbox": {
+        "background": "$colors.background",
+        "border": "$colors.border",
+        "checked": {
+          "background": "$colors.intentPrimary",
+          "border": "$colors.intentPrimary",
+          "disabled": {
+            "background": "$colors.intentPrimaryDisabled",
+            "border": "$colors.intentPrimaryDisabled"
+          },
+          "innerBackground": "#fff"
+        },
+        "color": "$colors.text",
+        "disabled": {
+          "color": "$colors.intentMinimalDisabled"
+        }
+      },
+      "colorPalette": {
+        "activeIconColor": "$colors.text",
+        "background": "$colors.surface",
+        "borderColor": "$colors.border",
+        "draggingBackgroundColor": "$colors.background",
+        "hover": {
+          "background": "$colors.intentBaseHover"
+        },
+        "iconColor": "$colors.muted",
+        "selected": {
+          "background": "$colors.intentPrimary"
+        }
+      },
+      "contextMenu": {
+        "icon": {
+          "rightArrowMargin": "2px 0 0 0"
+        },
+        "menu": {
+          "border": "unset",
+          "boxShadow": "0 0 0 1px rgba(13,27,42,0.08), 0 2px 4px rgba(13,27,42,0.12), 0 8px 24px rgba(13,27,42,0.12)",
+          "maxHeight": "100%",
+          "padding": "5px"
+        },
+        "menuItem": {
+          "alignItems": "flex-start",
+          "color": "#0D1B2A",
+          "height": "30px",
+          "icon": {
+            "margin": "0 10px 0 0"
+          },
+          "padding": "0 16px"
+        },
+        "styledMenu": {
+          "borderRadius": "4px",
+          "maxHeight": "calc(100vh - 10px)",
+          "maxWidth": "190px",
+          "minWidth": "130px",
+          "padding": "5px"
+        }
+      },
+      "createAlertDialog": {
+        "summaryPanel": {
+          "backgroundColor": "$colors.surface",
+          "borderColor": "$colors.border",
+          "primaryLine": {
+            "color": "$colors.text",
+            "fontSize": "$fontSizes[1]"
+          },
+          "secondaryLine": {
+            "color": "$colors.intentMinimal",
+            "fontSize": "$fontSizes[0]"
+          }
+        }
+      },
+      "crossSourceLinksConfig": {
+        "infoMessage": {
+          "background": "rgba(8,74,138,0.08)",
+          "color": "$colors.text"
+        },
+        "linksList": {
+          "item": {
+            "activeBgColor": "$colors.intentPrimary",
+            "activeColor": "$colors.onPrimary"
+          }
+        },
+        "sourceListAction": {
+          "color": "$colors.linkColor",
+          "hover": {
+            "color": "$colors.linkColor"
+          }
+        }
+      },
+      "crossVisual": {
+        "multiSelect": {
+          "borderColor": "$colors.border",
+          "color": "$colors.onSurface"
+        },
+        "settings": {
+          "borderColor": "$colors.border",
+          "secondaryColor": "$colors.muted"
+        },
+        "visualsList": {
+          "item": {
+            "activeBgColor": "$colors.intentPrimary",
+            "activeColor": "$colors.onPrimary"
+          }
+        }
+      },
+      "dashboard": {
+        "background": "$colors.background",
+        "header": {
+          "background": "$colors.surface",
+          "controls": {
+            "filterActiveIcon": "#0F8B5A",
+            "filterActiveIconHover": "#0A6E47",
+            "filterIcon": "#8899A6",
+            "filterIconHover": "#4A5568"
+          },
+          "text": "$colors.onSurface",
+          "unsavedText": "$colors.muted"
+        },
+        "layout": {
+          "widgetGaps": "8px"
+        },
+        "wrapperBackground": "$colors.background"
+      },
+      "dashboardList": {
+        "background": "$colors.background",
+        "linkColor": "$colors.linkColor",
+        "preview": {
+          "background": "$colors.surface",
+          "border": "#DDE3EA",
+          "color": "#4A5568",
+          "description": {
+            "color": "#8899A6"
+          },
+          "details": {
+            "propertyColor": "#8899A6",
+            "valueColor": "#0D1B2A"
+          },
+          "shadow": "rgba(13,27,42,0.12) 2px 2px 10px 0px",
+          "title": {
+            "background": "#EDF0F4",
+            "color": "#4A5568"
+          }
+        },
+        "sidePane": {
+          "active": {
+            "background": "rgba(8,74,138,0.2)"
+          },
+          "background": "#0D1B2A",
+          "color": "#DDE3EA",
+          "hover": {
+            "background": "rgba(8,74,138,0.12)"
+          }
+        },
+        "topPanel": {
+          "background": "rgba(245,247,250, 0.9)",
+          "color": "$colors.onBackground"
+        }
+      },
+      "dataDetails": {
+        "color": "$colors.text",
+        "iconColor": "#8899A6",
+        "sourceControlsColor": "$colors.intentPrimary",
+        "sourceNameColor": "$colors.intentMinimal",
+        "titleColor": "$colors.intentMinimal"
+      },
+      "datePicker": {
+        "active": {
+          "background": "$colors.intentPrimary",
+          "color": "$colors.onPrimary"
+        },
+        "background": "$colors.surface",
+        "color": "$colors.onSurface",
+        "divider": {
+          "color": "$colors.border"
+        },
+        "hover": {
+          "active": {
+            "background": "$colors.intentPrimaryHover",
+            "color": "$colors.onPrimary"
+          },
+          "background": "$colors.intentMinimalHover",
+          "color": "$colors.onSurface"
+        }
+      },
+      "dialog": {
+        "background": "$colors.background",
+        "color": "$colors.onBackgroundVariant",
+        "dullColor": "$colors.muted",
+        "errorMessage": {
+          "background": "$colors.intentDangerBackground",
+          "border": "$colors.intentDangerBorder",
+          "color": "$colors.message"
+        },
+        "footerBackground": "$colors.background",
+        "footerBorderTop": "1px solid #DDE3EA",
+        "infoMessage": {
+          "backgroundError": "$colors.intentDangerBackground",
+          "backgroundWarning": "$colors.intentWarningBackground"
+        },
+        "informationMessage": {
+          "background": "$colors.intentInfoBackground",
+          "border": "$colors.intentInfoBorder",
+          "color": "$colors.message"
+        },
+        "warningMessage": {
+          "background": "$colors.intentWarningBackground",
+          "border": "$colors.intentWarningBorder",
+          "color": "$colors.message"
+        }
+      },
+      "homePage": {
+        "banner": {
+          "background": "$colors.brandColor",
+          "color": "$colors.onPrimary",
+          "mixBlendMode": "lighten"
+        },
+        "color": "$colors.text",
+        "menuCard": {
+          "background": "$colors.surface",
+          "color": "$colors.onSurface"
+        },
+        "title": "$colors.muted"
+      },
+      "icons": {
+        "base": {
+          "color": "$colors.intentMinimal"
+        },
+        "danger": {
+          "color": "$colors.intentDanger"
+        },
+        "primary": {
+          "color": "$colors.intentPrimary"
+        },
+        "success": {
+          "color": "$colors.intentSuccess"
+        },
+        "warning": {
+          "color": "$colors.intentWarning"
+        }
+      },
+      "input": {
+        "background": "$colors.surface",
+        "border": "$colors.border",
+        "disabled": {
+          "background": "$colors.intentBaseDisabled"
+        },
+        "label": "$colors.text",
+        "placeholder": "$colors.muted",
+        "text": "$colors.text"
+      },
+      "list": {
+        "bg": "$colors.surface",
+        "border": {
+          "color": "$colors.intentBaseActive",
+          "warningColor": "$colors.intentWarning"
+        },
+        "item": {
+          "active": {
+            "bg": "$colors.intentBaseActive",
+            "color": "$colors.onSurface"
+          },
+          "bg": "$colors.surface",
+          "color": "$colors.text",
+          "hover": {
+            "bg": "$colors.intentBase",
+            "color": "$colors.onSurface"
+          }
+        }
+      },
+      "loader": {
+        "background": "rgba(255, 255, 255, 0.8)"
+      },
+      "menu": {
+        "active": {
+          "bg": "$colors.intentBaseActive",
+          "color": "$colors.text"
+        },
+        "bg": "$colors.surface",
+        "color": "$colors.text",
+        "disabled": "$colors.intentMinimalDisabled",
+        "divider": {
+          "color": "$colors.border",
+          "margin": "5px"
+        },
+        "hover": {
+          "bg": "$colors.intentBaseHover",
+          "color": "$colors.onSurface"
+        },
+        "icon": {
+          "active": {
+            "color": "$colors.intentSuccess",
+            "hover": {
+              "color": "$colors.text"
+            }
+          },
+          "color": "$colors.intentMinimal",
+          "delete": {
+            "hover": {
+              "color": "$colors.intentDanger"
+            }
+          },
+          "hover": {
+            "color": "$colors.onSurface"
+          },
+          "size": "16px"
+        }
+      },
+      "metaDataPicker": {
+        "background": "$colors.surface",
+        "color": "$colors.text",
+        "item": {
+          "aggrHover": "#EDF0F4",
+          "border": "#DDE3EA",
+          "hover": {
+            "bg": "$colors.intentBaseHover"
+          }
+        },
+        "secondary": "$colors.muted"
+      },
+      "modal": {
+        "background": "$colors.surface",
+        "color": "$colors.onSurface"
+      },
+      "multiSelect": {
+        "background": "$colors.surface",
+        "color": "$colors.text",
+        "disabled": {
+          "background": "$colors.intentBaseDisabled"
+        },
+        "tagBackground": "$colors.backgroundVariant",
+        "tagColor": "$colors.onBackgroundVariant"
+      },
+      "navbar": {
+        "background": "$colors.primary",
+        "colorInactive": "$colors.muted",
+        "menu": {
+          "background": "$colors.primary",
+          "color": "$colors.onPrimary",
+          "divider": "rgba(255, 255, 255, 0.12)",
+          "itemActive": "$colors.intentPrimary",
+          "itemHover": "$colors.intentMinimalHover"
+        },
+        "tabActive": "rgba(8,74,138,0.3)",
+        "tabBorderActive": "$colors.secondary",
+        "tabFontActive": "$colors.onPrimary",
+        "tabHover": "rgba(8,74,138,0.15)"
+      },
+      "placeholder": {
+        "border": "$colors.muted",
+        "text": "$colors.text"
+      },
+      "popover": {
+        "background": "$colors.surface",
+        "color": "$colors.onSurface",
+        "footer": {
+          "background": "#EDF0F4"
+        },
+        "title": {
+          "background": "#084A8A",
+          "color": "$colors.onPrimary"
+        }
+      },
+      "popup": {
+        "background": "$colors.surface",
+        "border": "$colors.border",
+        "closeBtn": "#8899A6",
+        "closeBtnHover": "#4A5568",
+        "color": "$colors.text"
+      },
+      "pubSubList": {
+        "background": "$colors.surface",
+        "border": "$colors.border",
+        "color": "$colors.text",
+        "emptyMessage": {
+          "color": "$colors.muted"
+        },
+        "headerColor": "$colors.text"
+      },
+      "radialMenu": {
+        "bg": "rgba(13,27,42,0.75)",
+        "color": "$colors.onPrimary",
+        "hover": {
+          "bg": "#0D1B2A"
+        },
+        "removeBtn": {
+          "bg": "#8899A6",
+          "color": "$colors.onPrimary",
+          "hover": {
+            "bg": "#EB2C33"
+          }
+        }
+      },
+      "radio": {
+        "background": "$colors.background",
+        "border": "$colors.border",
+        "color": "$colors.text",
+        "disabled": {
+          "color": "$colors.intentMinimalDisabled"
+        },
+        "selected": {
+          "background": "$colors.intentPrimary",
+          "border": "$colors.intentPrimary",
+          "disabled": {
+            "background": "$colors.intentPrimaryDisabled",
+            "border": "$colors.intentPrimaryDisabled"
+          },
+          "innerBackground": "#fff"
+        }
+      },
+      "resourcesTable": {
+        "active": {
+          "background": "#084A8A",
+          "color": "$colors.onPrimary"
+        },
+        "background": "$colors.surface",
+        "border": "$colors.border",
+        "borderRadius": "4px",
+        "borderWidth": "1px",
+        "color": "$colors.onSurface",
+        "header": {
+          "background": "#F0F3F7 linear-gradient(180deg,#F9FAFB,#F0F3F7)",
+          "backgroundImage": "linear-gradient(#F9FAFB, #F0F3F7)",
+          "color": "$colors.onSurface",
+          "secondaryColor": "$colors.text"
+        },
+        "hover": {
+          "background": "$colors.background",
+          "color": "$colors.text"
+        },
+        "linkColor": "$colors.linkColor",
+        "visualIconColor": "$colors.text"
+      },
+      "schedule": {
+        "list": {
+          "bg": "$colors.surface",
+          "border": "$colors.border",
+          "item": {
+            "active": {
+              "bg": "$colors.intentPrimary",
+              "color": "$colors.onPrimary"
+            },
+            "bg": "$colors.surface",
+            "color": "$colors.text",
+            "hover": {
+              "bg": "$colors.intentBaseHover"
+            }
+          }
+        }
+      },
+      "schemaFlowUI": {
+        "appliedJoins": "#0D1B2A",
+        "dbRelations": "#0D1B2A",
+        "legendBorder": "#DDE3EA",
+        "recommendedJoins": "#C7DAF0",
+        "schemaColor": "#084A8A",
+        "selected": "#063B6E",
+        "userDefinedJoins": "#C7DAF0"
+      },
+      "searchBar": {
+        "background": "$colors.surface",
+        "border": "$colors.border"
+      },
+      "security": {
+        "list": {
+          "item": {
+            "active": {
+              "bg": "$colors.intentPrimary",
+              "color": "$colors.onPrimary"
+            }
+          }
+        }
+      },
+      "select": {
+        "background": "$colors.surface",
+        "border": "$colors.border",
+        "color": "$colors.text",
+        "disabled": {
+          "background": "$colors.intentBaseDisabled"
+        }
+      },
+      "suggest": {
+        "background": "$colors.surface",
+        "border": "$colors.border",
+        "color": "$colors.text",
+        "items": {
+          "activeBackground": "$colors.backgroundVariant",
+          "background": "$colors.intentBase",
+          "hoverBackground": "$colors.intentBaseHover"
+        }
+      },
+      "switch": {
+        "background": "rgba(136,153,166, 0.5)",
+        "checked": {
+          "background": "$colors.intentPrimary",
+          "disabled": {
+            "background": "$colors.intentPrimaryDisabled"
+          }
+        },
+        "disabled": {
+          "background": "$colors.intentBaseDisabled"
+        }
+      },
+      "tables": {
+        "base": {
+          "background": "$colors.surface",
+          "backgroundOdd": "#F9FAFB",
+          "border": "#CBD5E0",
+          "borderSecondary": "#DDE3EA",
+          "color": "$colors.onSurface",
+          "colorSecondary": "$colors.muted",
+          "heading": {
+            "background": "$colors.background",
+            "color": "$colors.text",
+            "colorSecondary": "$colors.muted"
+          },
+          "hover": {
+            "background": "#E8F0F9"
+          },
+          "pagination": {
+            "background": "$colors.background",
+            "color": "$colors.text",
+            "colorSecondary": "$colors.muted"
+          }
+        }
+      },
+      "tag": {
+        "base": {
+          "bg": "#EDF0F4",
+          "color": "$colors.primary"
+        },
+        "danger": {
+          "bg": "#FDDEDE",
+          "color": "#8B1A1A"
+        },
+        "primary": {
+          "bg": "#E8F0F9",
+          "color": "#042D55"
+        },
+        "success": {
+          "bg": "#D4F5E0",
+          "color": "#064D30"
+        },
+        "warning": {
+          "bg": "#FEF0DB",
+          "color": "#7A4A0B"
+        }
+      },
+      "thumbnail": {
+        "delete": {
+          "background": "$colors.backgroundVariant",
+          "border": "$colors.border",
+          "color": "$colors.onBackgroundVariant"
+        },
+        "fav": {
+          "color": "#0F8B5A"
+        },
+        "subTitle": "$colors.muted",
+        "title": "$colors.text"
+      },
+      "timebar": {
+        "backgroundColor": "$colors.backgroundVariant",
+        "backgroundColorHover": "rgba(8,74,138,0.12)",
+        "border": "$colors.border",
+        "scrubber": {
+          "animatedTickColor": "#C7DAF0",
+          "backgroundColor": "#EDF0F4",
+          "backgroundColorHover": "rgba(8,74,138,0.12)",
+          "datePickerBackgroundColorMaximized": "$colors.intentPrimary",
+          "datePickerBackgroundColorMinimized": "#C7DAF0",
+          "datePickerColorMaximized": "$colors.intentPrimary",
+          "datePickerColorMinimized": "$colors.primary",
+          "splitterColor": "$colors.border",
+          "splitterColorHover": "$colors.border",
+          "textColor": "$colors.onBackgroundVariant",
+          "textColorHover": "$colors.onBackgroundVariant",
+          "tickColor": "#8899A6",
+          "tickColorHover": "#C7DAF0",
+          "tooltipDatePickerBackgroundColor": "$colors.intentPrimary",
+          "tooltipDatePickerColor": "#4A5568"
+        },
+        "textColor": "$colors.onBackgroundVariant",
+        "textColorHover": "$colors.text"
+      },
+      "toast": {
+        "danger": {
+          "bg": "$colors.intentDanger",
+          "color": "#fff"
+        },
+        "primary": {
+          "bg": "$colors.intentPrimary",
+          "color": "#fff"
+        },
+        "success": {
+          "bg": "$colors.intentSuccess",
+          "color": "#fff"
+        },
+        "warning": {
+          "bg": "$colors.intentWarning",
+          "color": "#fff"
+        }
+      },
+      "tooltip": {
+        "background": "#0D1B2A",
+        "color": "#fff"
+      },
+      "topPanel": {
+        "iconColor": "$colors.intentMinimal"
+      },
+      "visualEditor": {
+        "background": "$colors.background",
+        "borderColor": "$colors.border",
+        "color": "$colors.text",
+        "filterEditor": {
+          "container": {
+            "background": "$colors.surface",
+            "borderColor": "$colors.border"
+          },
+          "dropzone": {
+            "active": {
+              "background": "$colors.intentSuccessBackground",
+              "borderColor": "$colors.intentSuccessActive",
+              "borderStyle": "dashed",
+              "color": "$colors.intentSuccessActive"
+            },
+            "inactive": {
+              "background": "$colors.surface",
+              "borderColor": "$colors.border",
+              "borderStyle": "solid",
+              "color": "$colors.muted"
+            }
+          },
+          "filterItem": {
+            "borderColor": "$colors.border",
+            "color": "$colors.text",
+            "inactiveBgColor": "$colors.intentBase",
+            "secondaryColor": "$colors.intentMinimal",
+            "warningBorderColor": "$colors.intentWarning"
+          }
+        },
+        "list": {
+          "background": "$colors.surface",
+          "borderColor": "$colors.border",
+          "disabledIconColor": "$colors.intentMinimalDisabled",
+          "secondaryBackground": "$colors.intentBaseHover",
+          "warningBorderColor": "$colors.intentWarning"
+        },
+        "resizer": {
+          "background": "$colors.intentMinimalDisabled"
+        },
+        "secondaryColor": "$colors.muted"
+      },
+      "visualEditorCollapsible": {
+        "border": "$colors.border"
+      },
+      "visualizationSpinner": {
+        "errorText": "$colors.intentDanger"
+      },
+      "widget": {
+        "background": "$colors.surface",
+        "borderColor": "#DDE3EA",
+        "borderRadius": "4px",
+        "icon": {
+          "accentColor": "$colors.intentSuccess",
+          "badgeBgColor": "$colors.intentSuccess",
+          "badgeColor": "$colors.onPrimary",
+          "badgeWarningColor": "$colors.intentWarning",
+          "color": "$colors.intentMinimal",
+          "disabledColor": "$colors.muted"
+        },
+        "label": {
+          "background": "$colors.background",
+          "color": "#0D1B2A",
+          "hover": {
+            "background": "#DDE3EA"
+          },
+          "warningBorderColor": "$colors.intentWarning"
+        },
+        "progressBar": {
+          "bg": "$colors.accentColor"
+        },
+        "selected": {
+          "borderColor": "$colors.accentColor"
+        },
+        "statusLabel": {
+          "bg": "rgba(232,240,249,0.85)",
+          "color": "#4A5568"
+        },
+        "titleColor": "$colors.text",
+        "tooltip": {
+          "bgColor": "$colors.surface",
+          "borderColor": "$colors.border",
+          "color": "$colors.text",
+          "secondaryColor": "$colors.muted"
+        }
+      }
+    },
+    "variables": {
+      "breakpoints": [
+        "320px",
+        "568px",
+        "768px",
+        "1024px",
+        "1200px"
+      ],
+      "colors": {
+        "accentColor": "rgba(8,74,138,0.4)",
+        "background": "#F5F7FA",
+        "backgroundVariant": "#EDF0F4",
+        "border": "#CBD5E0",
+        "brandColor": "#084A8A",
+        "intentBase": "#F5F7FA",
+        "intentBaseActive": "#DDE3EA",
+        "intentBaseDisabled": "#EDF0F4",
+        "intentBaseHover": "#F0F3F7",
+        "intentDanger": "#EB2C33",
+        "intentDangerActive": "#C82328",
+        "intentDangerBackground": "rgba(235,44,51,0.12)",
+        "intentDangerBorder": "#EB2C33",
+        "intentDangerDisabled": "rgba(235,44,51,0.5)",
+        "intentDangerHover": "#F04A50",
+        "intentInfoBackground": "#E8F0F9",
+        "intentInfoBorder": "#084A8A",
+        "intentMinimal": "#4A5568",
+        "intentMinimalActive": "rgba(8,74,138,0.2)",
+        "intentMinimalDisabled": "rgba(136,153,166,0.5)",
+        "intentMinimalHover": "rgba(8,74,138,0.08)",
+        "intentPrimary": "#084A8A",
+        "intentPrimaryActive": "#042D55",
+        "intentPrimaryBackground": "rgba(8,74,138,0.10)",
+        "intentPrimaryDisabled": "rgba(8,74,138,0.4)",
+        "intentPrimaryHover": "#063B6E",
+        "intentSuccess": "#0F8B5A",
+        "intentSuccessActive": "#0A6E47",
+        "intentSuccessBackground": "rgba(15,139,90,0.12)",
+        "intentSuccessDisabled": "rgba(15,139,90,0.5)",
+        "intentSuccessHover": "#12A46A",
+        "intentWarning": "#D97B1A",
+        "intentWarningActive": "#B86714",
+        "intentWarningBackground": "rgba(217,123,26,0.15)",
+        "intentWarningBorder": "#F2994A",
+        "intentWarningDisabled": "rgba(217,123,26,0.5)",
+        "intentWarningHover": "#E89535",
+        "linkColor": "#084A8A",
+        "message": "#0D1B2A",
+        "muted": "#8899A6",
+        "onBackground": "#0D1B2A",
+        "onBackgroundVariant": "#4A5568",
+        "onPrimary": "#fff",
+        "onSurface": "#0D1B2A",
+        "primary": "#0D1B2A",
+        "primaryVariant": "#1A2F45",
+        "secondary": "#EB2C33",
+        "surface": "#fff",
+        "text": "#4A5568"
+      },
+      "fontSizes": [
+        12,
+        14,
+        16,
+        18,
+        24,
+        32,
+        40,
+        48,
+        64
+      ],
+      "fontWeights": {
+        "bold": 700,
+        "heading": 500,
+        "lightest": 300,
+        "normal": 400
+      },
+      "fonts": {
+        "body": "\"Helvetica Neue\", Helvetica, Arial, system-ui, sans-serif",
+        "heading": "\"Helvetica Neue\", Helvetica, Arial, system-ui, sans-serif",
+        "monospace": "Monaco, Menlo, \"Ubuntu Mono\", Consolas, source-code-pro, monospace"
+      },
+      "iconSet": "platform",
+      "lineHeights": {
+        "body": 1.25,
+        "heading": 1.125
+      },
+      "links": {
+        "primary": {
+          "color": "intentPrimary"
+        }
+      },
+      "palettes": {
+        "DefaultSequential": {
+          "2": [
+            "#084A8A",
+            "#C7DAF0"
+          ],
+          "3": [
+            "#084A8A",
+            "#4A88B8",
+            "#C7DAF0"
+          ],
+          "4": [
+            "#084A8A",
+            "#3A72A6",
+            "#7AAED0",
+            "#C7DAF0"
+          ],
+          "5": [
+            "#084A8A",
+            "#2E6499",
+            "#4A88B8",
+            "#7AAED0",
+            "#C7DAF0"
+          ],
+          "6": [
+            "#084A8A",
+            "#2E6499",
+            "#4A88B8",
+            "#6B9DC5",
+            "#9AC0DC",
+            "#C7DAF0"
+          ],
+          "7": [
+            "#084A8A",
+            "#1F5890",
+            "#3A72A6",
+            "#4A88B8",
+            "#6B9DC5",
+            "#9AC0DC",
+            "#C7DAF0"
+          ],
+          "8": [
+            "#084A8A",
+            "#1F5890",
+            "#3A72A6",
+            "#4A88B8",
+            "#6B9DC5",
+            "#9AC0DC",
+            "#B0CDDF",
+            "#C7DAF0"
+          ],
+          "9": [
+            "#084A8A",
+            "#1F5890",
+            "#2E6499",
+            "#3A72A6",
+            "#4A88B8",
+            "#6B9DC5",
+            "#9AC0DC",
+            "#B0CDDF",
+            "#C7DAF0"
+          ]
+        }
+      },
+      "radii": {
+        "default": 4,
+        "lg": 6,
+        "none": 0,
+        "pill": 600,
+        "sm": 2
+      },
+      "sizes": {
+        "lg": 736,
+        "md": 532,
+        "sm": 288,
+        "xl": 960,
+        "xxl": 1136
+      },
+      "space": [
+        0,
+        4,
+        8,
+        16,
+        32,
+        64,
+        128,
+        256,
+        512
+      ]
+    }
+  }
+}
