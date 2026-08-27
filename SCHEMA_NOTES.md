@@ -66,7 +66,7 @@ person doesn't burn the same hour.
     other entries reference these as `$colors.brandColor`.
     `variables.palettes` holds the chart palettes, each keyed by series
     count (`DefaultSequential['3'] == ['#084A8A', '#4A88B8', '#C7DAF0']`
-    in the Tetra Pak theme). Some older themes put the named palette at
+    in a deployed customer theme). Some older themes put the named palette at
     `content.colors` instead, so readers should try both.
   * `customProperties.*`: per-component overrides. The interesting keys for
     dashboards are `customProperties.charts.{KPI, LINE_AND_BARS, UBER_BARS,

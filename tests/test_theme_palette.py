@@ -21,11 +21,11 @@ FIXTURES = Path(__file__).parent / "fixtures"
 # Spot-check values read straight out of the fixture files. If the tool
 # starts reading a different path these stop matching.
 DEPLOYED = {
-    "tetra-pak-logi-composer-theme.json": {
+    "deployed-theme-b.json": {
         "brandColor": "#084A8A",
         "palettes": ["DefaultSequential"],
     },
-    "otto-partner-connect-theme-fixed.json": {
+    "deployed-theme-a.json": {
         "brandColor": "#E00016",
         "palettes": [
             "ComboSequential",
@@ -80,7 +80,7 @@ async def check(filename: str, expected: dict) -> list[str]:
         failures.append(f"{filename}: charts is empty")
 
     # Not read by the tool, but the reason THEMES.md's "every theme must
-    # include four KPI palettes" is wrong: Tetra Pak ships one and is live.
+    # include four KPI palettes" is wrong: deployed theme B ships one and is live.
     got = sorted(theme["content"]["variables"]["palettes"])
     if got != sorted(expected["palettes"]):
         failures.append(f"{filename}: palettes {got}, expected {expected['palettes']}")

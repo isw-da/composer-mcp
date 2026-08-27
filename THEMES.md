@@ -78,7 +78,7 @@ Four KPI palettes live under `variables.palettes`. KPI visuals use them
 through Conditional Formatting rules to colour tile backgrounds and metric
 text by performance.
 
-They are not mandatory. The deployed Tetra Pak theme ships
+They are not mandatory. A deployed customer theme ships
 `palettes: ['DefaultSequential']` alone and renders fine; KPI conditional
 formatting simply has nothing to offer in that theme. Include all four if
 you want performance colouring, and treat any of them as absent when
