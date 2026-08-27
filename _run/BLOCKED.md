@@ -1,5 +1,16 @@
 # Blocked, and what it would take
 
+> **Resolved 27 August 2026.** All three contradictions below were settled against a
+> live Composer 26.2.0 (SI chart 26.2.1) on the hetzner `kimi` rig. Verdicts and raw
+> results: [`LIVE-TEST-20260827.md`](LIVE-TEST-20260827.md). In short: **1.** both
+> write shapes work and Peter's "extra fields cause 400" is false, the real
+> distinction being that `PUT` upserts and fully replaces while `POST` is create-only.
+> **2.** Peter is wrong twice; division by zero yields `Infinity`, not null, and
+> `CASE WHEN` is fully supported, so `safe_div_expression()` is necessary.
+> **3.** Peter's three negatives all hold, and the `EMBED/CUSTOM_EVENT` replacement
+> for the third is now proven end to end. The rest of this file is kept as the record
+> of what was open and why.
+
 ## Nothing in this run was tested against a live instance
 
 Checked at the time of writing: no Composer responds on 18080, 8080, 8082 or 8081 on

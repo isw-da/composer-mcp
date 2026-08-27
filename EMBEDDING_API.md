@@ -39,9 +39,13 @@ error and produces an unfiltered dashboard rather than a failure you can see.
 He does not date these three or name the build they were tested against. The
 only dated bench result in the section is for Method 2, "Confirmed working
 against `showcase.logianalytics.com` on 2026-05-12"
-(`Logi-Composer-Symphony-Embedding-Reference.md:745`). Treat the negatives as
-true for a build of roughly that vintage and retest against 26.x before quoting
-them to a customer. Nothing here can be re-verified without a live instance.
+(`Logi-Composer-Symphony-Embedding-Reference.md:745`).
+
+**All three were retested end to end against a running Composer 26.2.0 on
+27 August 2026, and all three hold.** They are current fact, not a period piece,
+and they are safe to quote. The mechanism behind each, and the working call that
+replaces the third, are in "Settled against a live 26.2.1 instance" below and in
+[`_run/LIVE-TEST-20260827.md`](_run/LIVE-TEST-20260827.md).
 
 ## `PublicationOptions` and `publisherId`
 
@@ -440,5 +444,35 @@ document.dispatchEvent(new CustomEvent("EMBED/CUSTOM_EVENT", {
 listeners bound are `composer-dashboard-loaded`, `composer-visual-builder-loaded` and
 `discovery-report-loaded`.
 
-Not proven here: that the `EMBED/CUSTOM_EVENT` form filters a live dashboard end to end. That
-needs a dashboard, a source and a browser; this instance is a fresh install with no sources.
+### Runtime confirmation, 27 August 2026
+
+The paragraph above ended by flagging one thing as unproven: that the
+`EMBED/CUSTOM_EVENT` form filters a live dashboard end to end, for want of a
+dashboard, a source and a browser. All three were built on a `kimi` rig running
+Composer 26.2.0 and the whole list was re-run through the real SDK. Method and raw
+results: [`_run/LIVE-TEST-20260827.md`](_run/LIVE-TEST-20260827.md).
+
+**The static reading was right on every point, and the open item is now closed.**
+
+* `comp.trigger` is `undefined` at runtime and calling it throws
+  `trigger is not a function`, matching Peter's wording exactly.
+* `initialFilters` with `forTopic` is stored verbatim on the component and produces
+  SQL with no predicate on the mapped field. Accepted, stored, ignored.
+* `CustomEvent('EMBED/PUBLISH')` on `document` fires no query at all.
+* **The derived `EMBED/CUSTOM_EVENT` form works.** Dispatching it with
+  `detail.type = "EMBED/PUBLISH"` put
+  `and "ds"."full_site_name" = 'Karratha Gorge Iron Ore Mine'` into the generated
+  SQL 1.2 seconds later. The form written above from source reading, unproven at the
+  time, is correct as written.
+
+Verdicts were read from the SQL the query engine logged, not from the rendered
+chart, and each negative is gated by a positive control in the same session:
+`embedManager.publish("Site", ...)` on the same dashboard and topic did produce a
+`full_site_name` predicate. So the fieldLink, the topic label and the embed session
+were all sound, and the three negatives failed on their own merits rather than on a
+misconfigured harness.
+
+One practical note the SDK does not advertise: the `embed.js` script tag must carry
+`data-name="composer-embed-manager"`. The manager locates its own tag to derive the
+server path, and without it `initComposerEmbedManager` throws
+`Cannot read properties of null (reading 'groups')`.

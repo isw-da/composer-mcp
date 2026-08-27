@@ -55,24 +55,28 @@ Body (`:26-38`):
 }
 ```
 
-All three fields are required. `dataType` is always `"NUMBER"` for a calculated
-metric (`:38`, `:205`).
+Peter records all three as required (`:38`, `:205`). Live on 26.2.0, `dataType` is
+optional and defaults to `"NUMBER"` when omitted. See "Settled live" below.
 
 The other verbs (`:61-67`): `GET` and `DELETE` on the same per-name path, and
 `PATCH` on it for visibility only.
 
 ## Limits Peter records
 
-* **Extra body fields are rejected.** Sending `format`, `numberFormat` or
-  `visible` returns HTTP 400; Composer sets those itself (`:40`, `:204`).
+* ~~**Extra body fields are rejected.**~~ Peter records that sending `format`,
+  `numberFormat` or `visible` returns HTTP 400 and that Composer sets those itself
+  (`:40`, `:204`). **Tested false on 26.2.0, 27 August 2026.** Both fields are
+  accepted on both verbs and both are applied, not defaulted over. See "Settled
+  live" below.
 * **`sourceId` format.** Maximum 36 characters, lowercase letters, digits and
   dashes only, no underscores, and it may not start or end with a dash (`:203`).
 * **Field references use the field `name`, never the label** (`:71`, `:206`):
   `ad_spend_eur`, not `Ad Spend Eur`.
 * **Naming convention.** `customMetricName` in snake_case for the path,
   `label` in title case for display (`:196-197`).
-* **Division by zero returns null** and Composer renders that without erroring
-  (`:90`).
+* ~~**Division by zero returns null**~~ and Composer renders that without erroring
+  (`:90`). **Tested false on 26.2.0, 27 August 2026.** It returns `Infinity`, and
+  the KPI renders that word. See "Settled live" below.
 
 Peter records no cap on the number of custom metrics per source, no expression
 length limit, and no restriction on recursion depth when metrics reference other
@@ -173,37 +177,60 @@ Peter's own guide targets a different MCP server and names the tool
 `update_source_custom_metrics` (`:175-185`). That name does not exist in Amin's
 server; the equivalent is `composer_add_custom_metric`.
 
-### The verb and body disagreement
+### Settled live on Composer 26.2.0, 27 August 2026
 
-Peter and Amin's implementation do not match, and this is worth resolving before
-the next live run rather than papering over.
+Both shapes were run against a throwaway source on a live 26.2.0 instance. Method
+and raw results: [`_run/LIVE-TEST-20260827.md`](_run/LIVE-TEST-20260827.md).
 
-* Peter: `PUT` to the per-name path, body of exactly `label`, `expression`,
-  `dataType`, and `numberFormat` or `visible` in the body causes a 400
-  (`:14`, `:40`, `:204`).
-* Amin's MCP: `POST` to the collection path
-  (`~/composer-mcp/src/composer_mcp/tools/sources.py`, `add_custom_metric`),
-  body of `name`, `label`, `expression`, `visible`, and optionally
-  `numberFormat`, with no `dataType` at all.
-  `~/composer-mcp/SAFETY.md:187-188` records the same collection-level `GET` and
-  `POST`.
+**Neither party was wrong about their own endpoint. Both work.** Peter's `PUT` to
+the per-name path and Amin's `POST` to the collection both return 201 and store an
+identical resource. What was wrong is the claim that the other side's fields are
+rejected.
 
-Both are empirical, taken against different instances at different times.
-Neither has been re-run to settle it. If `add_custom_metric` starts returning
-400 on a build where it used to work, Peter's shape is the first thing to try:
-drop `visible` and `numberFormat`, add `"dataType": "NUMBER"`, and switch to
-`PUT` on the per-name path. The `numberFormat` presets in
-`sources.NUMBER_FORMATS` (`EUR`, `USD`, `GBP`, `PERCENT`, `RATIO`, `INTEGER`)
-and the quirks they shield you from would then have to be applied by a follow-up
-`PATCH` or accepted as Composer's defaults.
+Seven body variants all returned 201, including the two Peter documents as 400
+(`numberFormat` in the body, and `visible` in the body). Beyond acceptance:
 
-### Divide-by-zero: two different answers
+* **`numberFormat` is applied.** A deliberately distinctive
+  `CURRENCY`/`GBP`/`decimals 4` round-tripped exactly, on both verbs. So the
+  `sources.NUMBER_FORMATS` presets do real work and need no follow-up `PATCH`.
+* **`visible: false` is applied** and reads back `false`.
+* **`dataType` is optional** and defaults to `"NUMBER"`.
+* **`name` is optional on `POST`**; Composer slugifies the label instead.
 
-Peter says division by zero yields null and Composer copes (`:90`). Amin's MCP
-ships `sources.safe_div_expression()`, which wraps the division as
-`CASE WHEN denom > 0 THEN num / denom ELSE 0 END` because Composer's expression
-language has no `NULLIF`. These give different results, null against zero, and
-the choice belongs to whoever reads the chart: null leaves a gap in the series,
-zero draws a point at the baseline. Peter documents no `CASE WHEN` support at
-all, so a build that matches his shape may reject the safe-division wrapper.
-Untested.
+The distinction that does matter is the verb's semantics, which neither document
+carried:
+
+| | `PUT .../custom-metrics/{name}` | `POST .../custom-metrics` |
+|---|---|---|
+| New name | 201 | 201 |
+| Existing name | 200, updates | 400, `already exists` |
+| Update semantics | replaces the whole resource | n/a |
+
+**The trap is `PUT` as an update.** Re-`PUT`ting a metric with a body that omits
+`numberFormat` silently reverts the stored format to Composer's default. It is a
+full replace, not a merge, which is the same partial-body overwrite `SAFETY.md`
+records for `/api/users/{id}`. Use `POST` to create and reach for `PUT` only when
+you intend to overwrite every field, or send the full body you read back from `GET`.
+
+`composer_add_custom_metric` needs no change.
+
+### Divide-by-zero: settled, and Peter's answer is the wrong one
+
+Peter says division by zero yields null and Composer copes (`:90`). It does not.
+Live on 26.2.0, `sum(a) / (sum(b) - sum(b))` renders the literal string
+`Infinity` in a KPI, and its period-over-period comparison renders `NaN`.
+
+The reason is that the arithmetic never reaches SQL. Composer pushes down only the
+component aggregates and evaluates the expression above the database, so results
+follow IEEE-754 float rules rather than SQL three-valued logic. Nothing returns
+null because nothing in the chain is a SQL division.
+
+Peter's second claim, that there is no `CASE WHEN` support, is also false:
+`CASE WHEN` validates, stores and evaluates correctly, in upper or lower case, as
+does `COALESCE`. `NULLIF` genuinely is unsupported, and rejects at create time with
+`Function 'NULLIF' not supported`, so Amin's docstring is right about it.
+
+So `sources.safe_div_expression()` is both supported and load-bearing. The same
+dashboard rendered `2.00` for a normal division, `Infinity` for the unguarded
+divide-by-zero and `0.00` for the `CASE WHEN` guarded form. Without the wrapper the
+number a customer sees is the word "Infinity".
