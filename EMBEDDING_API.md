@@ -396,3 +396,49 @@ the `{ calc: n }` wrapping that `EMBEDDING_RUNTIME.md` documents for
 Prefer `visualApi.thread.getData()` when you want what a visual is already
 showing, since it costs no query. Reach for ZoomdataSDK when you need data no
 visual on the page is rendering.
+
+## Settled against a live 26.2.1 instance, 27 August 2026
+
+The three items above were retested against the embed SDK served by a running Simba
+Intelligence 26.2.1 install with Composer as its `discovery` subchart, fetched from
+`/discovery/embed/embed.js` (44,422 bytes). Full method in
+`/Users/aminhasan/simba-intel-lab/CONFIRMED-NOT-WORKING-VERDICT.md`.
+
+**All three confirmed.** Peter's list holds. What follows is the mechanism, which his entry
+did not carry, and which turns two of the three into a working call.
+
+`trigger` occurs zero times in the SDK. The publish API is `publish(topic, message, options)`
+and it lives on the **EmbedManager**, not on a dashboard component, so the working form is
+`embedManager.publish(...)`. Reaching for the component was the error.
+
+`forTopic` occurs zero times. `initialFilters` is real (11 occurrences, assigned in the
+component constructor beside `interactivityProfileName` and `interactivityOverrides`), but
+JavaScript accepts an unknown key without complaint, so the property is silently dropped.
+
+The event dispatched is named `EMBED/CUSTOM_EVENT`, not `EMBED/PUBLISH`. The SDK's whole
+dispatcher is:
+
+```js
+const L = (e, t) => {
+  const i = new CustomEvent("EMBED/CUSTOM_EVENT", {detail: {type: e, data: t}, bubbles: true});
+  document.dispatchEvent(i)
+};
+```
+
+with `publish(e,t,i){ L("EMBED/PUBLISH", {topic:e, message:t, options:i}) }`. So
+`EMBED/PUBLISH` is the inner `detail.type`, never an event name. The equivalent that should
+work from outside the SDK, derived from the source rather than guessed:
+
+```js
+document.dispatchEvent(new CustomEvent("EMBED/CUSTOM_EVENT", {
+  detail: { type: "EMBED/PUBLISH", data: { topic, message, options } },
+  bubbles: true
+}));
+```
+
+`document.addEventListener` and `postMessage` both occur zero times in this file; the only
+listeners bound are `composer-dashboard-loaded`, `composer-visual-builder-loaded` and
+`discovery-report-loaded`.
+
+Not proven here: that the `EMBED/CUSTOM_EVENT` form filters a live dashboard end to end. That
+needs a dashboard, a source and a browser; this instance is a fresh install with no sources.

@@ -574,16 +574,16 @@
         }
       },
       "metaDataPicker": {
-        "background": "#ADBAC6",
-        "color": "$colors.text",
+        "background": "#A3B1BD",
+        "color": "$colors.onSurface",
         "item": {
-          "aggrHover": "#9CA7B2",
-          "border": "#9CA7B2",
+          "aggrHover": "#939FAA",
+          "border": "#939FAA",
           "hover": {
-            "bg": "#9CA7B2"
+            "bg": "#939FAA"
           }
         },
-        "secondary": "$colors.onBackgroundVariant"
+        "secondary": "$colors.primaryVariant"
       },
       "modal": {
         "background": "$colors.surface",

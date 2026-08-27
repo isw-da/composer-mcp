@@ -197,12 +197,17 @@ cp["timebar"]["backgroundColorHover"] = opaque_hover
 cp["timebar"]["scrubber"]["backgroundColorHover"] = opaque_hover
 
 # 2. metaDataPicker.background was $colors.surface, identical to widget.background.
-picker_bg = mix(BORDER, MUTED, 0.45)
+#    Otto's correction is a mid grey panel with dark text on it; the same shape
+#    in Tetra Pak's blue-greys is a stop on the border -> muted line, with both
+#    text tokens repointed dark so the guide's contrast rule is met.
+picker_bg = mix(BORDER, MUTED, 0.60)          # #A3B1BD
+picker_item = darken(picker_bg, 0.90)
 cp["metaDataPicker"]["background"] = picker_bg
-cp["metaDataPicker"]["item"]["border"] = darken(picker_bg, 0.90)
-cp["metaDataPicker"]["item"]["aggrHover"] = darken(picker_bg, 0.90)
-cp["metaDataPicker"]["item"]["hover"]["bg"] = darken(picker_bg, 0.90)
-cp["metaDataPicker"]["secondary"] = "$colors.onBackgroundVariant"
+cp["metaDataPicker"]["item"]["border"] = picker_item
+cp["metaDataPicker"]["item"]["aggrHover"] = picker_item
+cp["metaDataPicker"]["item"]["hover"]["bg"] = picker_item
+cp["metaDataPicker"]["color"] = "$colors.onSurface"        # #0D1B2A
+cp["metaDataPicker"]["secondary"] = "$colors.primaryVariant"  # #1A2F45
 
 fixed["content"]["symphony"] = symphony
 
