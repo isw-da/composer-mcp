@@ -1,0 +1,17 @@
+# capability	target file	marker that must appear in the target	source that justified it (must exist)
+Embedding publication options	EMBEDDING_API.md	PublicationOptions	/Users/aminhasan/logi-composer/peter-kb/bundle-2026-05-21/logi-composer-toolkit/docs/Logi-Composer-Symphony-Embedding-Reference.md
+Embedding target components	EMBEDDING_API.md	targetComponents	/Users/aminhasan/logi-composer/peter-kb/bundle-2026-05-21/logi-composer-toolkit/docs/Logi-Composer-Symphony-Embedding-Reference.md
+Confirmed-not-working list	EMBEDDING_API.md	confirmed not working	/Users/aminhasan/logi-composer/peter-kb/bundle-2026-05-21/logi-composer-toolkit/docs/Logi-Composer-Symphony-Embedding-Reference.md
+Chatbot component class	CHATBOT_EVENTS.md	EmbeddedChatBot	/Users/aminhasan/logi-composer/peter-kb/bundle-2026-05-21/logi-composer-toolkit/docs/Composer-ChatBot-Embed-Guide.md
+Chatbot event names	CHATBOT_EVENTS.md	ChatBotEventNames	/Users/aminhasan/logi-composer/peter-kb/bundle-2026-05-21/logi-composer-toolkit/docs/Composer-ChatBot-Embed-Guide.md
+Chatbot visParams extraction	CHATBOT_EVENTS.md	visParams	/Users/aminhasan/logi-composer/peter-kb/bundle-2026-05-21/logi-composer-toolkit/docs/Composer-ChatBot-Embed-Guide.md
+Chatbot theme layer	CHATBOT_THEMING.md	symphony	/Users/aminhasan/logi-composer/peter-kb/bundle-2026-05-21/logi-composer-toolkit/Styling/logi-composer-theme-guide.md
+Chatbot theme properties	CHATBOT_THEMING.md	chatBot	/Users/aminhasan/logi-composer/peter-kb/bundle-2026-05-21/logi-composer-toolkit/Styling/logi-composer-theme-guide.md
+Visual type IDs	VISUAL_TYPES.md	visual type ID	/Users/aminhasan/logi-composer/peter-kb/bundle-2026-05-21/logi-composer-toolkit/docs/Composer-Visual-Types-Guide.md
+Custom metric expression syntax	CUSTOM_METRICS.md	expression	/Users/aminhasan/logi-composer/peter-kb/bundle-2026-05-21/logi-composer-toolkit/docs/Composer-Custom-Metrics-Guide.md
+Complete auth-mode inventory	SECURITY_ANSWERS.md	Kerberos	/Users/aminhasan/logi-composer/peter-kb/delivered-2026-08-27/Prospect-Requirement-Responses.md
+WCAG accessibility position	SECURITY_ANSWERS.md	WCAG	/Users/aminhasan/logi-composer/peter-kb/delivered-2026-08-27/Prospect-Requirement-Responses.md
+Encryption and key management	SECURITY_ANSWERS.md	key management	/Users/aminhasan/logi-composer/peter-kb/delivered-2026-08-27/Prospect-Requirement-Responses.md
+Disclosure tagging scheme	DISCLOSURE.md	NDA	/Users/aminhasan/logi-composer/peter-kb/delivered-2026-08-27/Prospect-Requirement-Responses-PLAYBOOK.md
+Beyond parity: 26.3 topology	BEYOND_PARITY.md	26.3	/Users/aminhasan/logi-composer/peter-kb/delivered-2026-08-27/Prospect-Requirement-Responses.md
+Beyond parity: token revocation	BEYOND_PARITY.md	trusted-access/tokens	/Users/aminhasan/logi-composer/peter-kb/delivered-2026-08-27/Prospect-Requirement-Responses.md
