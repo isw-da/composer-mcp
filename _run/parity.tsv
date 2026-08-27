@@ -9,9 +9,9 @@ Chatbot theme layer	CHATBOT_THEMING.md	symphony	/Users/aminhasan/logi-composer/p
 Chatbot theme properties	CHATBOT_THEMING.md	chatBot	/Users/aminhasan/logi-composer/peter-kb/bundle-2026-05-21/logi-composer-toolkit/Styling/logi-composer-theme-guide.md
 Visual type IDs	VISUAL_TYPES.md	visual type ID	/Users/aminhasan/logi-composer/peter-kb/bundle-2026-05-21/logi-composer-toolkit/docs/Composer-Visual-Types-Guide.md
 Custom metric expression syntax	CUSTOM_METRICS.md	expression	/Users/aminhasan/logi-composer/peter-kb/bundle-2026-05-21/logi-composer-toolkit/docs/Composer-Custom-Metrics-Guide.md
-Complete auth-mode inventory	SECURITY_ANSWERS.md	Kerberos	/Users/aminhasan/logi-composer/peter-kb/delivered-2026-08-27/Prospect-Requirement-Responses.md
-WCAG accessibility position	SECURITY_ANSWERS.md	WCAG	/Users/aminhasan/logi-composer/peter-kb/delivered-2026-08-27/Prospect-Requirement-Responses.md
-Encryption and key management	SECURITY_ANSWERS.md	key management	/Users/aminhasan/logi-composer/peter-kb/delivered-2026-08-27/Prospect-Requirement-Responses.md
+Complete auth-mode inventory	_internal-only/SECURITY_ANSWERS.md	Kerberos	/Users/aminhasan/logi-composer/peter-kb/delivered-2026-08-27/Prospect-Requirement-Responses.md
+WCAG accessibility position	_internal-only/SECURITY_ANSWERS.md	WCAG	/Users/aminhasan/logi-composer/peter-kb/delivered-2026-08-27/Prospect-Requirement-Responses.md
+Encryption and key management	_internal-only/SECURITY_ANSWERS.md	key management	/Users/aminhasan/logi-composer/peter-kb/delivered-2026-08-27/Prospect-Requirement-Responses.md
 Disclosure tagging scheme	DISCLOSURE.md	NDA	/Users/aminhasan/logi-composer/peter-kb/delivered-2026-08-27/Prospect-Requirement-Responses-PLAYBOOK.md
-Beyond parity: 26.3 topology	BEYOND_PARITY.md	26.3	/Users/aminhasan/logi-composer/peter-kb/delivered-2026-08-27/Prospect-Requirement-Responses.md
-Beyond parity: token revocation	BEYOND_PARITY.md	trusted-access/tokens	/Users/aminhasan/logi-composer/peter-kb/delivered-2026-08-27/Prospect-Requirement-Responses.md
+Beyond parity: 26.3 topology	_internal-only/BEYOND_PARITY.md	26.3	/Users/aminhasan/logi-composer/peter-kb/delivered-2026-08-27/Prospect-Requirement-Responses.md
+Beyond parity: token revocation	_internal-only/BEYOND_PARITY.md	trusted-access/tokens	/Users/aminhasan/logi-composer/peter-kb/delivered-2026-08-27/Prospect-Requirement-Responses.md

@@ -28,3 +28,6 @@ gcp-sa.json
 *.pem
 *.key
 secrets/
+
+# Never publish: Confluence-derived roadmap and NDA-tagged source material
+_internal-only/

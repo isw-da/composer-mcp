@@ -1,10 +1,17 @@
 # Chatbot theming: the `symphony` layer
 
+> **Customer identities removed.** Two real shipped themes are used as evidence
+> throughout this file and are referred to only as "deployed theme A" and
+> "deployed theme B". The technical findings are unchanged; the source files sit
+> in an internal working copy, not here.
+
+
+
 > Absorbed from Peter Armstrong's Logi Composer toolkit on 27 August 2026, source
 > `peter-kb/bundle-2026-05-21/logi-composer-toolkit/Styling/logi-composer-theme-guide.md`
 > lines 185 to 262, cross-checked against the two deployed customer themes that
-> ship beside it (`otto-partner-connect-theme-fixed.json`,
-> `tetra-pak-logi-composer-theme.json`).
+> ship beside it (`deployed-theme-a.json`,
+> `deployed-theme-b.json`).
 
 `THEMES.md` is the schema reference for the whole theme record and gives the
 `symphony` section two sentences (`THEMES.md:26`, `THEMES.md:42-44`).
@@ -27,12 +34,12 @@ errors. No warning appears in the browser console, in the embed events, or in
 any server log. The user sees a branded dashboard with an unbranded bot next to
 it, and the only detection method is looking at the screen.
 
-The deployed evidence for this is not hypothetical. `tetra-pak-modern` shipped
+The deployed evidence for this is not hypothetical. `deployed-theme-b` shipped
 to a customer with `content` containing exactly `customProperties` and
 `variables` and no `symphony` key at all
-(`tetra-pak-logi-composer-theme.json`, `content`). Any chatbot embedded with
-`theme: 'tetra-pak-modern'` is running Composer's stock chat colours on a
-Tetra Pak dashboard. Whether that was a decision or an oversight is not
+(`deployed-theme-b.json`, `content`). Any chatbot embedded with
+`theme: 'deployed-theme-b'` is running Composer's stock chat colours on a
+Deployed theme B dashboard. Whether that was a decision or an oversight is not
 recorded anywhere in the bundle; the guide that documents the trap
 (`logi-composer-theme-guide.md:187`) sits in the same directory as the theme
 that walks into it.
@@ -69,7 +76,7 @@ stores `"content": {}`.
 
 ## `symphony.variables.colors`: the 12 token groups
 
-| Group | Keys | Purpose | In Otto |
+| Group | Keys | Purpose | In Deployed theme A |
 |---|---|---|---|
 | `background.level0-5` | 6 | Surface layers, lightest to darkest | `#FFFFFF`, `#F8F8F8`, `#F2F2F2`, `#E5E5E5`, `#CCCCCC`, `#AAAAAA` |
 | `brand.primary.50-950` | 11 | Brand accent ramp | `#FFF5F6` up to `#3D0004`, `500` = `#E00016` |
@@ -84,8 +91,8 @@ stores `"content": {}`.
 | `dataSeries.01-13` | 13 | Chart series palette for Symphony visuals | 13 distinct hexes |
 | `white` | 1 | Alias used by component tokens | `#FFFFFF` |
 
-Group list and intent from `logi-composer-theme-guide.md:208-222`; the Otto
-column is read from `otto-partner-connect-theme-fixed.json`,
+Group list and intent from `logi-composer-theme-guide.md:208-222`; the Deployed theme A
+column is read from `deployed-theme-a.json`,
 `content.symphony.variables.colors`.
 
 Light versus dark direction: for a light theme run `background.level0-5` white
@@ -103,8 +110,8 @@ for a dark theme (`logi-composer-theme-guide.md:260`).
 | `actionCard` | `background`, `hoverBackground`, `activeBackground`, `description`, `icon` | `:230` |
 | `sidebar` | `background`, `iconColor`, `tabBg`, `tabBgActive`, `tabBgHover`, `activeIndicatorColor`, `headingTabBg`, `menuBorder`, `profileBubble.bg`, `profileBubble.color`, `verticalAccentBg` | `:231` |
 
-Otto carries all five, with every property in the guide's list present and no
-extras (`otto-partner-connect-theme-fixed.json`,
+Deployed theme A carries all five, with every property in the guide's list present and no
+extras (`deployed-theme-a.json`,
 `content.symphony.components`). Two shapes are worth noting because they are
 not plain colours: `sidebar.tabBg` is the literal string `"transparent"`, and
 `sidebar.verticalAccentBg` is a `border-image` value,
@@ -115,9 +122,9 @@ included. Copying that key as a flat hex will not render the accent bar.
 
 Every one is resolved at render time from `symphony.variables.colors` via
 `$colors.*` or set as a literal hex, 8-digit hex, `rgba()`, or CSS gradient
-(`logi-composer-theme-guide.md:235`). The Otto column is the deployed value.
+(`logi-composer-theme-guide.md:235`). The Deployed theme A column is the deployed value.
 
-| Property | Controls | Otto value |
+| Property | Controls | Deployed theme A value |
 |---|---|---|
 | `background` | Main chat area background | `$colors.background.level1` |
 | `bgGradient` | Welcome screen hero gradient | `linear-gradient(321.91deg, #A0000E 34.29%, #600007 80.96%)` |
@@ -137,15 +144,15 @@ Every one is resolved at render time from `symphony.variables.colors` via
 | `timeoutMessageBorder` | Timeout bubble border | `$colors.semantic.warning.500` |
 
 Property list and purposes: `logi-composer-theme-guide.md:239-254`. Values:
-`otto-partner-connect-theme-fixed.json`,
+`deployed-theme-a.json`,
 `content.symphony.components.chatBot`, verified as exactly these 16 keys with
 no additions and no omissions.
 
-Two authoring conventions the guide states and Otto confirms. Message bubbles
+Two authoring conventions the guide states and Deployed theme A confirms. Message bubbles
 use 8-digit hex so the chat background bleeds through, `BF` being roughly 75
 percent opacity (`logi-composer-theme-guide.md:261`). The welcome gradient runs
 at 321.91 degrees, a diagonal from bottom left to upper right, and takes two
-dark tints of the brand primary (`:262`, `:369`); Otto uses `brand.primary.700`
+dark tints of the brand primary (`:262`, `:369`); Deployed theme A uses `brand.primary.700`
 and `brand.primary.900` by value rather than by token reference.
 
 ## Applying it
@@ -175,7 +182,7 @@ custom theme's `symphony` coverage is unknown (`CHATBOT_EMBED.md:69`).
 ## What the deployed themes prove that a template cannot
 
 **Which tokens are load-bearing.** Of the 16 `chatBot` properties, 9 resolve
-through `$colors.*` and 7 are literals in Otto. The token references touch only
+through `$colors.*` and 7 are literals in Deployed theme A. The token references touch only
 `background.level1`, `slate.600`, `foreground.level0`, `brand.primary.300/400/500`,
 `white`, `semantic.danger.500`, and `semantic.warning.500`. That is 9 values out
 of roughly 95 tokens defined in `symphony.variables.colors`. The remaining
@@ -184,10 +191,10 @@ and `neutral` most obviously. Whether the chatbot consumes `dataSeries`
 internally for chart rendering is not documented, and this file does not prove
 it. Populating those groups is defensive, so keep them.
 
-**The slate ramp is deliberately broken.** Otto's `slate` is a normal light-to-dark
+**The slate ramp is deliberately broken.** Deployed theme A's `slate` is a normal light-to-dark
 ramp from `50` (`#F8F8F8`) to `500` (`#777777`), then reverses: `600` is
 `#FFFFFF`, `700` `#F8F8F8`, `800` `#F2F2F2`, `900` `#E5E5E5`, `950` `#CCCCCC`
-(`otto-partner-connect-theme-fixed.json`,
+(`deployed-theme-a.json`,
 `content.symphony.variables.colors.slate`). The reason is `chatBot.inputBg`
 pointing at `$colors.slate.600`: on a light theme the input has to be white, so
 the ramp was bent at that stop rather than the property being given a literal.
@@ -196,17 +203,17 @@ and the deployed file shows the consequence, which is that `slate` in a light
 Composer theme is not a monotonic scale and should not be treated as one when
 you reuse it for anything else.
 
-**Semantic ramps were left stock.** All four `semantic.*` families in Otto are
+**Semantic ramps were left stock.** All four `semantic.*` families in Deployed theme A are
 the Tailwind defaults, untouched apart from `danger.500` (`#EF4646` against
 Tailwind's `#EF4444`). Only `danger.500` and `warning.500` are referenced by
 the chatBot block. Rebranding the semantic ramps is optional work with no
 visible effect on the bot unless you also repoint those two properties.
 
-**A key present in production and documented nowhere.** Otto's
+**A key present in production and documented nowhere.** Deployed theme A's
 `variables.palettes` carries `ComboSequential` alongside `DefaultSequential`
 and the four KPI palettes, and `customProperties.charts.COMBO_CHART.palette`
 and `charts.LINE_AND_BARS.palette` both point at it
-(`otto-partner-connect-theme-fixed.json`, `content.variables.palettes` and
+(`deployed-theme-a.json`, `content.variables.palettes` and
 `content.customProperties.charts`). Neither Peter's guide (`:53-54`) nor
 `THEMES.md:34-35` mentions it. The lesson is that the palette set is open:
 any named palette in `variables.palettes` can be referenced by a
@@ -216,8 +223,8 @@ here because the evidence turned up in the same file.
 
 **A documented key absent from both deployed themes.**
 `brand.secondary.300-700` is in the guide's token table
-(`logi-composer-theme-guide.md:212`, marked optional). Otto's `brand` contains
-`primary` only, and Tetra Pak has no `symphony` at all, so no shipped theme
+(`logi-composer-theme-guide.md:212`, marked optional). Deployed theme A's `brand` contains
+`primary` only, and Deployed theme B has no `symphony` at all, so no shipped theme
 exercises it. Treat it as genuinely optional and expect no component in the
 documented five to reference it.
 
@@ -226,27 +233,27 @@ documented five to reference it.
 ### The four KPI palettes are not mandatory
 
 Peter's guide states that every Logi Composer theme "must include four KPI
-palettes" (`logi-composer-theme-guide.md:268`). The deployed `tetra-pak-modern`
+palettes" (`logi-composer-theme-guide.md:268`). The deployed `deployed-theme-b`
 theme ships `variables.palettes` containing `DefaultSequential` alone
-(`tetra-pak-logi-composer-theme.json`, `content.variables.palettes`) and
+(`deployed-theme-b.json`, `content.variables.palettes`) and
 renders in production. The claim is false as written. The four palettes are
 needed only when KPI conditional formatting is in play, since that is what
 consumes them (`THEMES.md:81-85`). Include all four when you want performance
 colouring on KPI tiles, and when reading someone else's theme treat any of them
 as legitimately absent.
 
-### Do not copy `customProperties` from the Tetra Pak example
+### Do not copy `customProperties` from the Deployed theme B example
 
 The guide's minimal-theme recipe is to start from
 `logi-composer-theme-template.json` and replace the `BRAND_*` placeholders
 (`logi-composer-theme-guide.md:358`), and the bundle's own workflow note points
-at the Tetra Pak file as the deployed example to copy. `THEMES.md:206-209` forbids
+at the Deployed theme B file as the deployed example to copy. `THEMES.md:206-209` forbids
 that approach outright: never build a theme by copying `customProperties` from
 a template, an example file, or a different instance, because
 `customProperties` schemas differ between instances and versions and a
 mismatch fails silently as blank grey sidebar panels (`THEMES.md:191-204`).
 
-The Tetra Pak file also carries two of Peter's own documented bugs, verified in
+The Deployed theme B file also carries two of Peter's own documented bugs, verified in
 the JSON:
 
 - `customProperties.timebar.backgroundColorHover` and
@@ -258,15 +265,15 @@ the JSON:
 - `customProperties.metaDataPicker.background` is `$colors.surface`, which
   resolves to `#fff`, the exact value of `customProperties.widget.background`.
   The guide describes this failure with the default token
-  `$colors.backgroundVariant` (`:129`); Tetra Pak is the worse case, picker and
+  `$colors.backgroundVariant` (`:129`); Deployed theme B is the worse case, picker and
   widget tile identical, so the dimension picker is invisible rather than merely
   low contrast.
 
-Otto is the corrected counterpart on both counts: opaque `#E0E0E0` and
+Deployed theme A is the corrected counterpart on both counts: opaque `#E0E0E0` and
 `#FCEAEC` on the timebar, `#BEBEBE` on the picker
-(`otto-partner-connect-theme-fixed.json`, `content.customProperties.timebar`
+(`deployed-theme-a.json`, `content.customProperties.timebar`
 and `.metaDataPicker`). If you must start from a deployed file rather than a
-fresh reference pull, start from Otto, and still follow the reference-theme
+fresh reference pull, start from Deployed theme A, and still follow the reference-theme
 workflow in `THEMES.md:206-235`.
 
 ## The write path Peter's material never mentions
