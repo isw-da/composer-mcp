@@ -138,6 +138,39 @@ hours before we found the workaround.
 These endpoints don't exist in v25. May land in a future release; not
 something role escalation fixes.
 
+### No REST route to a visual's aggregated numbers (SI-bundled chart)
+* **Symptom:** `POST /api/export/visualdata/{id}` returns HTTP 500 with
+  `"Couldn't get an endpoint for service sdk-service"`. So do
+  `/api/export/rawdataforvisual` and the rest of the `/api/export/*`
+  family.
+* **Cause:** the SI chart ships no `sdk-service`. Verified 27 Aug 2026 on
+  three separate 26.2.1 rigs: none of them lists it in
+  `kubectl -n simba-intel get svc`. This is a packaging gap, not a
+  permissions or licence problem, and it is identical on every rig, so
+  moving instances does not help.
+* **Also not a way round it:** `GET /api/sources/{id}/data` does exist and
+  is marked experimental in the live OpenAPI at `/discovery/api-docs`, but
+  it returns raw rows only. No aggregation, no custom metrics.
+* **Workaround:** the query path in this deployment shape is the
+  WebSocket. To read a metric's computed value, render it (an embedded
+  dashboard works) and read the value from the DOM, or read the generated
+  SQL from the `discovery-query-engine` pod logs and run it yourself.
+  Note that Composer computes custom-metric arithmetic **above** SQL, so
+  the SQL alone will not give you the metric, only its components.
+
+### Trusted Access is licence-gated, the metadata API is not
+* **Symptom:** Basic-auth CRUD against `/discovery/api` keeps working
+  normally, while `POST /api/trusted-access/pull/tokens` returns 401
+  `"User authentication has been denied. The license to Logi Composer has
+  expired."`
+* **Why it misleads:** the instance looks healthy from every scripted
+  check that only touches metadata. Embedding is the first thing to fail
+  and it fails as an auth error, not a licence error, so the obvious
+  suspects are the client id and secret.
+* **Check first:** `GET /api/license` reports `expired` and
+  `expirationDate` in plain fields. Apply a valid key with
+  `POST /api/license` and `{"licenseKey": "..."}`.
+
 ### Reference lines on LINE_AND_BARS
 * **What you'd try:** Adding a horizontal target line at ROAS = 2.5 on the
   trend chart so viewers can see "are we above target?" at a glance.
