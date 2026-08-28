@@ -49,31 +49,44 @@ jobs:
       - name: Generate notes and release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        # Notes are generated in Python, not shell. Two shell attempts died with
+        # exit 141: `git tag | grep | head -1` and `git log | head -25` both take
+        # SIGPIPE when head closes the pipe, and under `set -o pipefail` that
+        # kills the step after it has produced the right answer. Rather than
+        # patch a third pipe, this removes the class.
         run: |
-          set -euo pipefail
-          TAG="${{ github.event.inputs.tag || github.ref_name }}"
-          # NOT `git tag | grep | head -1`. head closes the pipe, git tag gets
-          # SIGPIPE, and with `set -o pipefail` the step dies with exit 141
-          # having produced correct output. That failed this workflow once.
-          PREV=$(git tag --sort=-v:refname | grep -v "^${TAG}$" > /tmp/tags.txt || true; \
-                 head -1 /tmp/tags.txt 2>/dev/null || true)
-          {
-            echo "## What changed"
-            echo ""
-            if [ -n "$PREV" ]; then
-              git log --no-merges --pretty='- %s' "${PREV}..${TAG}" 2>/dev/null || \
-              git log --no-merges --pretty='- %s' "${PREV}..HEAD"
-            else
-              echo "First tagged release."
-              echo ""
-              git log --no-merges --pretty='- %s' | head -25
-            fi
-            echo ""
-            echo "## Consuming this"
-            echo ""
-            echo '```bash'
-            echo "git clone --branch ${TAG} --depth 1 https://github.com/${{ github.repository }}.git"
-            echo '```'
-          } > /tmp/notes.md
-          gh release create "$TAG" --title "$TAG" --notes-file /tmp/notes.md || \
-          gh release edit   "$TAG" --notes-file /tmp/notes.md
+          python3 - <<'PYEOF'
+          import os, subprocess, pathlib
+
+          tag  = os.environ["TAG"]
+          repo = os.environ["GITHUB_REPOSITORY"]
+
+          def git(*a):
+              return subprocess.run(["git", *a], capture_output=True, text=True).stdout.splitlines()
+
+          tags = [t for t in git("tag", "--sort=-v:refname") if t != tag]
+          prev = tags[0] if tags else None
+
+          lines = ["## What changed", ""]
+          if prev:
+              rng = f"{prev}..{tag}"
+              log = git("log", "--no-merges", "--pretty=- %s", rng) or \
+                    git("log", "--no-merges", "--pretty=- %s", f"{prev}..HEAD")
+              lines += log or ["- No commits between tags."]
+          else:
+              lines += ["First tagged release.", ""]
+              lines += git("log", "--no-merges", "--pretty=- %s")[:25]
+
+          lines += ["", "## Consuming this", "",
+                    "```bash",
+                    f"git clone --branch {tag} --depth 1 https://github.com/{repo}.git",
+                    "```", "",
+                    "See `CONSUMING.md` for how to run the gates and what they mean."]
+
+          pathlib.Path("/tmp/notes.md").write_text("\n".join(lines))
+          print(f"notes: {len(lines)} lines, previous tag {prev or 'none'}")
+          PYEOF
+
+          gh release create "$TAG" --title "$TAG" --notes-file /tmp/notes.md \
+            || gh release edit "$TAG" --notes-file /tmp/notes.md
