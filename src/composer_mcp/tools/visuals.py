@@ -132,6 +132,29 @@ async def list_visuals(client: ComposerClient) -> list[dict]:
     ]
 
 
+async def list_visual_types(client: ComposerClient) -> list[dict]:
+    """List the instance-wide visual-type catalogue (`GET /visual-types`).
+
+    This is the chart library the whole instance can draw, independent of any
+    source. It differs from `get_source_visual_types`, which returns only the
+    subset a given source can render. Verified against bundled Composer 26.2.0:
+    27 built-in types, each with id, name, type token, and an enabled flag.
+    Useful as a reference when picking a `visualTypeId` for `create_visual`.
+    """
+    items = await client.get_list("/visual-types")
+    return [
+        {
+            "id": v.get("id"),
+            "name": v.get("name"),
+            "type": v.get("type"),
+            "group": v.get("group"),
+            "enabled": v.get("enabled"),
+        }
+        for v in items
+        if isinstance(v, dict)
+    ]
+
+
 async def get_visual(client: ComposerClient, visual_id: str) -> dict:
     return await client.get(f"/visuals/{visual_id}")
 

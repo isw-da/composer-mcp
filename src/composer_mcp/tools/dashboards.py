@@ -293,10 +293,28 @@ async def test_dashboard_render(
             result.update({"ok": False, "error": str(e)[:300]})
             failed += 1
         results.append(result)
-    return {
+    summary: dict[str, Any] = {
         "dashboard": {"id": d.get("id"), "name": d.get("name")},
         "widgetCount": len(d.get("widgets") or []),
         "passed": passed,
         "failed": failed,
         "results": results,
     }
+    # Drift guard (verified against bundled Composer 26.2.0, 2026-08-28):
+    # the per-widget data probe POSTs to /visuals/{id}/data, which returns a
+    # routing-level 404 ("No static resource") on this build — the route does
+    # not exist here. When EVERY widget fails that exact way, the dashboard is
+    # almost certainly fine and the probe endpoint is the problem, so say that
+    # loudly instead of implying every widget is broken.
+    if results and passed == 0 and all(
+        "No static resource" in str(r.get("error", "")) and "/data" in str(r.get("error", ""))
+        for r in results
+    ):
+        summary["endpointWarning"] = (
+            "Every widget failed with a 404 'No static resource .../data'. This "
+            "build does not expose POST /visuals/{id}/data, so this is the probe "
+            "endpoint being absent, NOT the widgets being broken. Treat the "
+            "render result as UNKNOWN, not failed. Fetch visual data via "
+            "/export/visualdata/{id} or query the source directly to verify."
+        )
+    return summary

@@ -176,21 +176,58 @@ Mint via `composer_mint_pull_token` (existing user) or
 
 ### 2. Basic auth
 
-Works on standalone Composer. Bundled Symphony usually rejects Basic on the
-v3 API.
+Works on standalone Composer, and (verified 2026-08-28) also works on a
+bundled SI/Composer 26.2.0 instance with a local `admin` account: Basic auth
+is stateless, so the Spring Security CSRF gate is skipped and reads and writes
+both succeed. Use `COMPOSER_CONTEXT_PATH=/discovery` for the bundled path.
 
 ```bash
-COMPOSER_BASE=http://localhost:18080 \
+COMPOSER_BASE=http://localhost:18081 \
+COMPOSER_CONTEXT_PATH=/discovery \
 COMPOSER_USER=admin \
 COMPOSER_PASSWORD='<password>' \
 .venv/bin/composer-mcp
 ```
+
+A word on the "Basic gives 401 on bundled" belief: that 401 comes from
+probing a path that does not exist. `v3` is the **media type**
+(`application/vnd.composer.v3+json`), not a URL segment. `GET /discovery/api/v3/version`
+404s as a route, and for an unauthenticated request Spring returns 401 before
+it routes, so the wrong path reads as an auth failure. Hit a real path
+(`GET /discovery/api/sources`) with Basic and the `admin` account and it
+returns 200. Basic can still be genuinely disabled on deployments wired to
+SSO/SAML with no local user store; test against your own instance. Note the
+`supervisor` account in the Kubernetes secret is an SI service account, not a
+Composer login — only `admin` authenticates against `/discovery/api`.
 
 ### 3. Session cookie + CSRF (bundled Symphony only)
 
 Bundled Symphony is gated by Spring Security CSRF. Read the `SESSION` cookie
 value and the `<meta name="_csrf">` content from a logged-in browser tab and
 pass both via env vars. Mutations get `X-CSRF-TOKEN` added automatically.
+
+**You do not need a browser for this.** The session can be minted
+programmatically (verified 2026-08-28 against bundled 26.2.0):
+
+```python
+import re, requests
+B, USER, PW = "http://localhost:18081", "admin", "<password>"
+s = requests.Session()
+page = s.get(f"{B}/discovery/login")                      # sets the SESSION cookie
+csrf = re.search(r'name="_csrf" content="([^"]+)"', page.text).group(1)
+r = s.post(f"{B}/discovery/j_spring_security_check",
+           data={"j_username": USER, "j_password": PW, "_csrf": csrf},
+           allow_redirects=False)
+# 302 -> /discovery/visualization/home means success; 302 -> /discovery/login means it failed.
+session_cookie = s.cookies["SESSION"]                     # feed to COMPOSER_SESSION_COOKIE
+```
+
+Two things that make the manual attempt fail: the hidden `<input name="_csrf">`
+in the form is empty (JavaScript fills it at submit time), so read the token
+from the `<meta name="_csrf">` tag, not the input; and keep the SESSION cookie
+from the `GET /login` on the POST, because the CSRF token is bound to it. For
+unattended use prefer Basic (mode 2) or a bearer token (mode 1); this mode is
+mainly for a deployment where Basic is disabled.
 
 ```bash
 COMPOSER_BASE=https://<composer-host> \

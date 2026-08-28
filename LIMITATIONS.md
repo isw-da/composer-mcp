@@ -316,6 +316,23 @@ helper rather than reinventing.
 | Per-visual `source.filters` value shape | `values` (plural) silently strips, stores `path: null` | Use `value` (singular) — accepts string or array, persists and filters at runtime |
 | Per-persona row narrowing | Source-RLS 500s on cross-warehouse joined sources; `dashboard.rowFilters` ignored; `createComponent({filters})` is UI not data | `embed/serve_nocache.py`'s `/api/persona` proxy bulk-PUTs `visual.source.filters` per widget |
 
+## Endpoint drift verified against bundled Composer 26.2.0 (2026-08-28)
+
+Three paths this MCP calls are **not in the Composer OpenAPI spec** (223 paths,
+identical between the live 26.2.0 pull and the 26.2.1 mirror) and were probed
+directly against a live bundled 26.2.0 instance:
+
+| Wrapped call | Live result on 26.2.0 | What it means |
+| --- | --- | --- |
+| `POST /connections/{id}/test` (`composer_test_connection`) | 404 for every method | The path does not exist. The only related endpoint is `PUT /connections/test`, which validates a **new candidate** connection body (name required, must be unique) and cannot see a saved connection's password, so there is no true "test an existing connection by id" on this build. The wrapper now reports this instead of a bare 404. |
+| `POST /visuals/{id}/data` (`composer_test_dashboard_render`) | 404 "No static resource" | The per-widget render probe hits a route that does not exist on 26.2.0, so the tool marks every widget failed. The wrapper now detects the all-404 pattern and returns `endpointWarning` telling you the result is UNKNOWN, not failed. Fetch visual data via `POST /export/visualdata/{id}` or query the source directly to actually verify a render. |
+| `/managed/*` (blocked by guard) | 404 (MDR module not deployed) | `/managed` is the MDR surface; it is absent from VDD-only deployments and from the discovery OpenAPI. The client guard refuses it regardless. NOTE: the guard previously only matched `/managed`, but `request()` normalises paths to `/api/managed`, so the guard never fired on real calls; fixed 2026-08-28 to match `/api/managed`. |
+
+Currency: newest published Composer image is **26.2.2** (Docker Hub
+`insightsoftware/zoomdata`, 2026-08-20); newest SI is **26.2.1**. The REST path
+set is unchanged across 26.2.0/26.2.1, so these are patch releases at the API
+level — coverage numbers hold, but docs that pin 26.2.1 as "newest" are stale.
+
 ## Where the workarounds live
 
 * `SCHEMA_NOTES.md` — full schema reference per visual type, plus all the

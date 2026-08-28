@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
-from ..client import ComposerClient
+from ..client import ComposerClient, ComposerError
 
 
 async def list_connection_types(client: ComposerClient) -> list[dict]:
@@ -300,9 +300,37 @@ async def test_connection(client: ComposerClient, connection_id: str) -> dict:
     connections, `ok: false` with "OAuth required" means the user hasn't
     completed the auth flow yet — open the connection in the UI to
     trigger it.
+
+    Drift note (verified against bundled Composer 26.2.0, 2026-08-28):
+    the `POST /connections/{id}/test` path this wrapper was written against
+    does not exist on this build (404 for GET/POST/PUT). The endpoint that
+    exists is `PUT /connections/test`, which validates a *candidate*
+    connection definition supplied in the body (name required and must be
+    unique) rather than probing an already-saved connection by id. A saved
+    connection's GET body also does not carry its password, so there is no
+    way on 26.2.0 to run a true live connectivity probe of an existing
+    connection through the REST API. This wrapper therefore tries the
+    documented path, and on 404 reports the limitation plainly instead of
+    returning a bare error or a misleading `ok: true`.
     """
     try:
         return await client.post(f"/connections/{connection_id}/test", {})
+    except ComposerError as e:
+        if e.status == 404:
+            return {
+                "ok": None,
+                "tested": False,
+                "reason": (
+                    "No test-by-id endpoint on this Composer build "
+                    "(POST /connections/{id}/test returned 404). On 26.2.0 the "
+                    "only related endpoint is PUT /connections/test, which "
+                    "validates a new candidate connection definition, not a "
+                    "saved connection, and cannot access the stored password. "
+                    "Verify connectivity by opening the connection in the UI, "
+                    "or by creating a fresh candidate and validating it."
+                ),
+                "status": e.status,
+            }
+        return {"ok": False, "error": str(e)[:300], "status": e.status}
     except Exception as e:
-        # Some Composer builds expose this as GET; fall back.
         return {"ok": False, "error": str(e)[:300]}

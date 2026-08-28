@@ -61,7 +61,12 @@ _USER_ID_PATH_RE = None  # lazily compiled below
 #    rule: composer-mcp lives in the VDD/discovery world only. If you
 #    need to push something through MDR you do it manually, deliberately,
 #    outside this codebase.
-_MDR_PATH_PREFIXES = ("/managed", "managed/")
+#
+#    NOTE: request() normalises every path to start with `/api` before the
+#    guard runs, so the guard must match the `/api/managed` form. The bare
+#    `/managed` and `managed/` entries are kept for defence in depth in case
+#    a caller reaches _enforce_guards with a pre-normalised path.
+_MDR_PATH_PREFIXES = ("/api/managed", "/managed", "managed/")
 
 
 class MdrEndpointBlocked(RuntimeError):

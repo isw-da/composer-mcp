@@ -650,3 +650,26 @@ async def import_sources(
 # ----------------------------------------------------------------------
 
 # (Kept on purpose: scripts that imported the old name keep working.)
+
+
+async def list_uploads(client: ComposerClient) -> list[dict]:
+    """List file-upload-backed datasets (`GET /uploads`).
+
+    Composer can build a source from an uploaded file (CSV/Excel) instead of
+    a live warehouse connection. This lists those uploads (id, name, size).
+    Useful when scaffolding a demo from a flat file, and as the entry point
+    for the writeback story documented in WRITEBACK_ODATA.md. Verified live
+    against bundled Composer 26.2.0 (returns an empty list on a clean tenant).
+    """
+    items = await client.get_list("/uploads")
+    return [
+        {
+            "id": u.get("id"),
+            "name": u.get("name"),
+            "description": u.get("description"),
+            "fileSize": u.get("fileSize"),
+            "accountId": u.get("accountId"),
+        }
+        for u in items
+        if isinstance(u, dict)
+    ]

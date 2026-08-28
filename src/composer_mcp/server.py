@@ -137,6 +137,15 @@ TOOLS: list[dict[str, Any]] = [
         "handler": lambda c, a: sources.list_sources(c),
     },
     {
+        "name": "composer_list_uploads",
+        "description": (
+            "List file-upload-backed datasets (CSV/Excel uploads that Composer "
+            "can build a source from without a live warehouse connection)."
+        ),
+        "schema": _schema({}),
+        "handler": lambda c, a: sources.list_uploads(c),
+    },
+    {
         "name": "composer_get_source",
         "description": "Get full details of a source.",
         "schema": _schema({"source_id": {"type": "string"}}, ["source_id"]),
@@ -338,6 +347,17 @@ TOOLS: list[dict[str, Any]] = [
         "description": "List all visuals.",
         "schema": _schema({}),
         "handler": lambda c, a: visuals.list_visuals(c),
+    },
+    {
+        "name": "composer_list_visual_types",
+        "description": (
+            "List the instance-wide visual-type catalogue (the whole chart "
+            "library, independent of any source). Use to pick a visualTypeId "
+            "for composer_create_visual. Differs from "
+            "composer_get_source_visual_types, which is scoped to one source."
+        ),
+        "schema": _schema({}),
+        "handler": lambda c, a: visuals.list_visual_types(c),
     },
     {
         "name": "composer_get_visual",
