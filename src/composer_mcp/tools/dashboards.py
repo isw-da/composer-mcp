@@ -25,7 +25,7 @@ from __future__ import annotations
 import secrets
 from typing import Any
 
-from ..client import ComposerClient
+from ..client import ComposerClient, ComposerError
 
 
 def widget_id() -> str:
@@ -261,6 +261,7 @@ async def test_dashboard_render(
     results = []
     passed = 0
     failed = 0
+    unknown = 0
     for w in d.get("widgets") or []:
         vid = w.get("visualId") or (w.get("content") or {}).get("visualId")
         result: dict[str, Any] = {
@@ -276,19 +277,68 @@ async def test_dashboard_render(
         try:
             v = await client.get(f"/visuals/{vid}")
             result["visualType"] = v.get("type")
-            # Composer's data endpoint accepts a row limit query param.
+            # `POST /visuals/{id}/data` does not exist on 26.2.0 and does not
+            # appear anywhere in the instance's own api-docs, so this check
+            # marked every widget failed on every dashboard. The endpoint that
+            # returns a visual's computed data is
+            # `POST /export/visualdata/{id}`, which takes a required
+            # `formatting.exportFormat` body and an optional `rows` query
+            # param. Verified against bundled 26.2.0 on 2026-08-28.
             data = await client.request(
                 "POST",
-                f"/visuals/{vid}/data",
-                json={"limit": sample_rows},
+                f"/export/visualdata/{vid}",
+                json={"formatting": {"exportFormat": "JSON"}},
+                params={"rows": sample_rows},
             )
-            row_count = (
-                len(data.get("rows") or [])
-                if isinstance(data, dict)
-                else len(data or [])
-            )
-            result.update({"ok": True, "rowCount": row_count})
-            passed += 1
+            if isinstance(data, dict):
+                rows = data.get("rows") or data.get("data") or data.get("content") or []
+            else:
+                rows = data or []
+            row_count = len(rows) if isinstance(rows, list) else 0
+            # A visual that resolves but returns nothing is the failure this
+            # tool exists to catch before a demo, so it is not a pass.
+            result.update({
+                "ok": row_count > 0,
+                "rowCount": row_count,
+                **({} if row_count else
+                   {"error": "the visual resolved but returned no rows"}),
+            })
+            if row_count:
+                passed += 1
+            else:
+                failed += 1
+            results.append(result)
+            continue
+        except ComposerError as e:
+            # Third outcome, and the one that matters for honesty. Export is
+            # served by a separate `sdk-service` microservice. A bundled SI
+            # deployment does not necessarily run it: on the 26.2.0 lab the
+            # Consul catalogue holds only Zoomdata, consul, edc-postgresql and
+            # query-engine, and every export call returns
+            # 500 "Couldn't get an endpoint for service sdk-service".
+            #
+            # That says nothing about the dashboard. Reporting it as a failed
+            # widget would condemn a perfectly good dashboard before a demo,
+            # which is the opposite of what this tool is for.
+            detail = str(getattr(e, "body", "")) + " " + str(e)
+            if e.status >= 500 and "sdk-service" in detail:
+                result.update({
+                    "ok": None,
+                    "checked": False,
+                    "reason": (
+                        "export is unavailable on this deployment: Composer serves "
+                        "visual data export from a separate sdk-service, and this "
+                        "instance's service catalogue does not carry it. The widget "
+                        "was NOT checked, and this is not evidence against it."
+                    ),
+                })
+                unknown += 1
+                results.append(result)
+                continue
+            result.update({"ok": False, "error": str(e)[:300]})
+            failed += 1
+            results.append(result)
+            continue
         except Exception as e:
             result.update({"ok": False, "error": str(e)[:300]})
             failed += 1
@@ -298,6 +348,7 @@ async def test_dashboard_render(
         "widgetCount": len(d.get("widgets") or []),
         "passed": passed,
         "failed": failed,
+        "unknown": unknown,
         "results": results,
     }
     # Drift guard (verified against bundled Composer 26.2.0, 2026-08-28):

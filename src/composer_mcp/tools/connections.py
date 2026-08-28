@@ -293,44 +293,69 @@ async def create_databricks_connection(
 
 
 async def test_connection(client: ComposerClient, connection_id: str) -> dict:
-    """Ask Composer to attempt a live connection test.
+    """Test a saved connection by making it do real work against its database.
 
-    Returns whatever Composer reports — usually `{ok: true}` or an error
-    object with the underlying JDBC/connector failure. For OAuth-based
-    connections, `ok: false` with "OAuth required" means the user hasn't
-    completed the auth flow yet — open the connection in the UI to
-    trigger it.
+    Verified against bundled Composer 26.2.0 on 2026-08-28.
 
-    Drift note (verified against bundled Composer 26.2.0, 2026-08-28):
-    the `POST /connections/{id}/test` path this wrapper was written against
-    does not exist on this build (404 for GET/POST/PUT). The endpoint that
-    exists is `PUT /connections/test`, which validates a *candidate*
-    connection definition supplied in the body (name required and must be
-    unique) rather than probing an already-saved connection by id. A saved
-    connection's GET body also does not carry its password, so there is no
-    way on 26.2.0 to run a true live connectivity probe of an existing
-    connection through the REST API. This wrapper therefore tries the
-    documented path, and on 404 reports the limitation plainly instead of
-    returning a bare error or a misleading `ok: true`.
+    There is no test-by-id endpoint on this build. `POST/PUT/GET
+    /connections/{id}/test` all 404, and no path matching connection+test
+    appears anywhere in the instance's own api-docs. `PUT /connections/test`
+    exists but validates a *candidate* definition supplied in the body, so it
+    cannot speak to a saved connection whose stored password the API never
+    returns.
+
+    An earlier version of this wrapper concluded from that that a saved
+    connection could not be probed at all, and returned a limitation notice.
+    That was wrong. `GET /connections/{id}/schema` round-trips to the database
+    and returns its schema list, which is exactly what testing a connection
+    means: credentials accepted, network reachable, driver working. On this lab
+    it returns `["public", "sales"]` in 0.34s, and a non-existent id returns a
+    clean 404 naming the id, so success and failure are distinguishable.
+
+    `ok` is True only when the database answered. It is never True on the
+    strength of a 200 alone.
     """
     try:
-        return await client.post(f"/connections/{connection_id}/test", {})
+        body = await client.get(f"/connections/{connection_id}/schema")
     except ComposerError as e:
         if e.status == 404:
             return {
-                "ok": None,
-                "tested": False,
-                "reason": (
-                    "No test-by-id endpoint on this Composer build "
-                    "(POST /connections/{id}/test returned 404). On 26.2.0 the "
-                    "only related endpoint is PUT /connections/test, which "
-                    "validates a new candidate connection definition, not a "
-                    "saved connection, and cannot access the stored password. "
-                    "Verify connectivity by opening the connection in the UI, "
-                    "or by creating a fresh candidate and validating it."
-                ),
-                "status": e.status,
+                "ok": False,
+                "tested": True,
+                "connectionId": connection_id,
+                "reason": "no connection with this id on this instance",
+                "status": 404,
             }
-        return {"ok": False, "error": str(e)[:300], "status": e.status}
-    except Exception as e:
-        return {"ok": False, "error": str(e)[:300]}
+        # The connection exists; the probe reached it and it failed. This is
+        # the genuine connectivity failure: bad credentials, host unreachable,
+        # driver error. Composer puts the underlying cause in the body.
+        return {
+            "ok": False,
+            "tested": True,
+            "connectionId": connection_id,
+            "reason": "the connection exists but its database did not answer",
+            "error": str(e)[:400],
+            "status": e.status,
+        }
+    except Exception as e:                                    # noqa: BLE001
+        return {"ok": False, "tested": False, "error": str(e)[:300]}
+
+    schemas = body.get("content") if isinstance(body, dict) else body
+    if not isinstance(schemas, list):
+        return {
+            "ok": False,
+            "tested": True,
+            "connectionId": connection_id,
+            "reason": "schema endpoint answered in an unexpected shape",
+            "body": str(body)[:300],
+        }
+    return {
+        "ok": True,
+        "tested": True,
+        "connectionId": connection_id,
+        "schemas": schemas,
+        "evidence": (
+            f"GET /connections/{connection_id}/schema returned {len(schemas)} schema(s); "
+            f"the database answered, so credentials, network and driver all work"
+        ),
+    }
