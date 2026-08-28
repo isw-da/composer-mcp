@@ -6,6 +6,8 @@ welcome to clone, pin, fork or open an issue against them.
 
 ## The set
 
+<!-- toolkit-table: generated from toolkit.json, do not edit by hand -->
+
 | Repo | What it holds | Refresh |
 |---|---|---|
 | [`isw-da/logi-si-docs`](https://github.com/isw-da/logi-si-docs) | Documentation mirror: SI, Composer v25 and v26, the legacy devnet archive, and the Composer OpenAPI specs | **Automatic**, weekly |
@@ -14,6 +16,8 @@ welcome to clone, pin, fork or open an issue against them.
 | [`isw-da/symphony-dashboard-builder-skill`](https://github.com/isw-da/symphony-dashboard-builder-skill) | Building Composer dashboards server side, and the client-side assembly around them | Manual |
 | [`isw-da/simba-intelligence-mcp`](https://github.com/isw-da/simba-intelligence-mcp) | SI API as MCP tools (private) | Manual |
 | [`isw-da/logi-report-kb`](https://github.com/isw-da/logi-report-kb) | Logi Report and JReport documentation and API surface | **Automatic**, weekly, but only the 3,891 current articles. The 9,344-article devnet archive is frozen because that host is dead, and `api/` needs a running instance CI cannot reach |
+
+<!-- /toolkit-table -->
 
 ## Pin a version, do not track a branch
 
