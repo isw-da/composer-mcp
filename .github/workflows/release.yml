@@ -52,7 +52,11 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${{ github.event.inputs.tag || github.ref_name }}"
-          PREV=$(git tag --sort=-v:refname | grep -v "^${TAG}$" | head -1 || true)
+          # NOT `git tag | grep | head -1`. head closes the pipe, git tag gets
+          # SIGPIPE, and with `set -o pipefail` the step dies with exit 141
+          # having produced correct output. That failed this workflow once.
+          PREV=$(git tag --sort=-v:refname | grep -v "^${TAG}$" > /tmp/tags.txt || true; \
+                 head -1 /tmp/tags.txt 2>/dev/null || true)
           {
             echo "## What changed"
             echo ""
