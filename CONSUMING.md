@@ -13,7 +13,7 @@ welcome to clone, pin, fork or open an issue against them.
 | [`isw-da/simba-intelligence-skill`](https://github.com/isw-da/simba-intelligence-skill) | SI install, configuration and troubleshooting skills | Manual |
 | [`isw-da/symphony-dashboard-builder-skill`](https://github.com/isw-da/symphony-dashboard-builder-skill) | Building Composer dashboards server side, and the client-side assembly around them | Manual |
 | [`isw-da/simba-intelligence-mcp`](https://github.com/isw-da/simba-intelligence-mcp) | SI API as MCP tools (private) | Manual |
-| [`isw-da/logi-report-kb`](https://github.com/isw-da/logi-report-kb) | Logi Report and JReport documentation and API surface (private) | Manual |
+| [`isw-da/logi-report-kb`](https://github.com/isw-da/logi-report-kb) | Logi Report and JReport documentation and API surface | **Automatic**, weekly, but only the 3,891 current articles. The 9,344-article devnet archive is frozen because that host is dead, and `api/` needs a running instance CI cannot reach |
 
 ## Pin a version, do not track a branch
 
