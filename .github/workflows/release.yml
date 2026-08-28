@@ -1,0 +1,75 @@
+name: Release
+
+# Cutting a release is the difference between "clone main and hope" and "pin a
+# version". Anyone consuming this repo needs a fixed point they can name.
+#
+# Trigger: push a tag. Nothing is automatic, because a release is a claim that
+# the contents are worth depending on, and that is a judgement.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release, e.g. v0.3.0'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # notes need the history
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run every gate in the repo
+        run: |
+          set -euo pipefail
+          # A release must not be cuttable from a red tree. Every verify-*
+          # script in the repo runs, and any non-zero stops the release.
+          found=0
+          for g in $(git ls-files | grep -E '(^|/)verify[-_].*\.(py|sh)$' || true); do
+            found=$((found+1))
+            echo "::group::$g"
+            if [ "${g##*.}" = "py" ]; then python "$g"; else bash "$g"; fi
+            echo "::endgroup::"
+          done
+          echo "ran $found gate(s)"
+          if [ "$found" -eq 0 ]; then
+            echo "::warning::no verify-* gate found in this repo"
+          fi
+
+      - name: Generate notes and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          PREV=$(git tag --sort=-v:refname | grep -v "^${TAG}$" | head -1 || true)
+          {
+            echo "## What changed"
+            echo ""
+            if [ -n "$PREV" ]; then
+              git log --no-merges --pretty='- %s' "${PREV}..${TAG}" 2>/dev/null || \
+              git log --no-merges --pretty='- %s' "${PREV}..HEAD"
+            else
+              echo "First tagged release."
+              echo ""
+              git log --no-merges --pretty='- %s' | head -25
+            fi
+            echo ""
+            echo "## Consuming this"
+            echo ""
+            echo '```bash'
+            echo "git clone --branch ${TAG} --depth 1 https://github.com/${{ github.repository }}.git"
+            echo '```'
+          } > /tmp/notes.md
+          gh release create "$TAG" --title "$TAG" --notes-file /tmp/notes.md || \
+          gh release edit   "$TAG" --notes-file /tmp/notes.md
