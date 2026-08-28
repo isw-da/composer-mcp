@@ -1,17 +1,24 @@
 # Chatbot theming: the `symphony` layer
 
-> **Customer identities removed.** Two real shipped themes are used as evidence
-> throughout this file and are referred to only as "deployed theme A" and
-> "deployed theme B". The technical findings are unchanged; the source files sit
-> in an internal working copy, not here.
+> **How the evidence here works.** The findings below were established against
+> two themes that really did ship to customers. Those two files are NOT in this
+> repository and never were published: they sit in an internal working copy.
+>
+> What ships here instead is a pair of synthetic fixtures,
+> `tests/fixtures/theme-with-symphony-six-palettes.json` and
+> `theme-no-symphony-one-palette.json`, generated from them key for key with
+> every concrete colour replaced. Structure is identical, so a citation below
+> that points at a path resolves in this repo and means what it says. A claim
+> about what a customer actually chose rests on the internal originals, and is
+> marked where it appears.
 
 
 
 > Absorbed from Peter Armstrong's Logi Composer toolkit on 27 August 2026, source
 > `peter-kb/bundle-2026-05-21/logi-composer-toolkit/Styling/logi-composer-theme-guide.md`
 > lines 185 to 262, cross-checked against the two deployed customer themes that
-> ship beside it (`deployed-theme-a.json`,
-> `deployed-theme-b.json`).
+> ship beside it (`theme-with-symphony-six-palettes.json`,
+> `theme-no-symphony-one-palette.json`).
 
 `THEMES.md` is the schema reference for the whole theme record and gives the
 `symphony` section two sentences (`THEMES.md:26`, `THEMES.md:42-44`).
@@ -34,12 +41,13 @@ errors. No warning appears in the browser console, in the embed events, or in
 any server log. The user sees a branded dashboard with an unbranded bot next to
 it, and the only detection method is looking at the screen.
 
-The deployed evidence for this is not hypothetical. `deployed-theme-b` shipped
-to a customer with `content` containing exactly `customProperties` and
-`variables` and no `symphony` key at all
-(`deployed-theme-b.json`, `content`). Any chatbot embedded with
-`theme: 'deployed-theme-b'` is running Composer's stock chat colours on a
-Deployed theme B dashboard. Whether that was a decision or an oversight is not
+The evidence for this is not hypothetical, and the file is not in this repo.
+Deployed theme B, held in the internal working copy, shipped to a customer with
+`content` containing exactly `customProperties` and `variables` and no
+`symphony` key at all. The synthetic fixture preserves that shape, so the claim
+is checkable here too (`theme-no-symphony-one-palette.json`, `content`). Any
+chatbot embedded with that theme is running Composer's stock chat colours on a
+fully branded dashboard. Whether that was a decision or an oversight is not
 recorded anywhere in the bundle; the guide that documents the trap
 (`logi-composer-theme-guide.md:187`) sits in the same directory as the theme
 that walks into it.
@@ -92,7 +100,7 @@ stores `"content": {}`.
 | `white` | 1 | Alias used by component tokens | `#FFFFFF` |
 
 Group list and intent from `logi-composer-theme-guide.md:208-222`; the Deployed theme A
-column is read from `deployed-theme-a.json`,
+column is read from `theme-with-symphony-six-palettes.json`,
 `content.symphony.variables.colors`.
 
 Light versus dark direction: for a light theme run `background.level0-5` white
@@ -111,7 +119,7 @@ for a dark theme (`logi-composer-theme-guide.md:260`).
 | `sidebar` | `background`, `iconColor`, `tabBg`, `tabBgActive`, `tabBgHover`, `activeIndicatorColor`, `headingTabBg`, `menuBorder`, `profileBubble.bg`, `profileBubble.color`, `verticalAccentBg` | `:231` |
 
 Deployed theme A carries all five, with every property in the guide's list present and no
-extras (`deployed-theme-a.json`,
+extras (`theme-with-symphony-six-palettes.json`,
 `content.symphony.components`). Two shapes are worth noting because they are
 not plain colours: `sidebar.tabBg` is the literal string `"transparent"`, and
 `sidebar.verticalAccentBg` is a `border-image` value,
@@ -144,7 +152,7 @@ Every one is resolved at render time from `symphony.variables.colors` via
 | `timeoutMessageBorder` | Timeout bubble border | `$colors.semantic.warning.500` |
 
 Property list and purposes: `logi-composer-theme-guide.md:239-254`. Values:
-`deployed-theme-a.json`,
+`theme-with-symphony-six-palettes.json`,
 `content.symphony.components.chatBot`, verified as exactly these 16 keys with
 no additions and no omissions.
 
@@ -194,7 +202,7 @@ it. Populating those groups is defensive, so keep them.
 **The slate ramp is deliberately broken.** Deployed theme A's `slate` is a normal light-to-dark
 ramp from `50` (`#F8F8F8`) to `500` (`#777777`), then reverses: `600` is
 `#FFFFFF`, `700` `#F8F8F8`, `800` `#F2F2F2`, `900` `#E5E5E5`, `950` `#CCCCCC`
-(`deployed-theme-a.json`,
+(`theme-with-symphony-six-palettes.json`,
 `content.symphony.variables.colors.slate`). The reason is `chatBot.inputBg`
 pointing at `$colors.slate.600`: on a light theme the input has to be white, so
 the ramp was bent at that stop rather than the property being given a literal.
@@ -213,7 +221,7 @@ visible effect on the bot unless you also repoint those two properties.
 `variables.palettes` carries `ComboSequential` alongside `DefaultSequential`
 and the four KPI palettes, and `customProperties.charts.COMBO_CHART.palette`
 and `charts.LINE_AND_BARS.palette` both point at it
-(`deployed-theme-a.json`, `content.variables.palettes` and
+(`theme-with-symphony-six-palettes.json`, `content.variables.palettes` and
 `content.customProperties.charts`). Neither Peter's guide (`:53-54`) nor
 `THEMES.md:34-35` mentions it. The lesson is that the palette set is open:
 any named palette in `variables.palettes` can be referenced by a
@@ -233,9 +241,9 @@ documented five to reference it.
 ### The four KPI palettes are not mandatory
 
 Peter's guide states that every Logi Composer theme "must include four KPI
-palettes" (`logi-composer-theme-guide.md:268`). The deployed `deployed-theme-b`
-theme ships `variables.palettes` containing `DefaultSequential` alone
-(`deployed-theme-b.json`, `content.variables.palettes`) and
+palettes" (`logi-composer-theme-guide.md:268`). Deployed theme B ships
+`variables.palettes` containing `DefaultSequential` alone
+(`theme-no-symphony-one-palette.json`, `content.variables.palettes`) and
 renders in production. The claim is false as written. The four palettes are
 needed only when KPI conditional formatting is in play, since that is what
 consumes them (`THEMES.md:81-85`). Include all four when you want performance
@@ -271,7 +279,7 @@ the JSON:
 
 Deployed theme A is the corrected counterpart on both counts: opaque `#E0E0E0` and
 `#FCEAEC` on the timebar, `#BEBEBE` on the picker
-(`deployed-theme-a.json`, `content.customProperties.timebar`
+(`theme-with-symphony-six-palettes.json`, `content.customProperties.timebar`
 and `.metaDataPicker`). If you must start from a deployed file rather than a
 fresh reference pull, start from Deployed theme A, and still follow the reference-theme
 workflow in `THEMES.md:206-235`.

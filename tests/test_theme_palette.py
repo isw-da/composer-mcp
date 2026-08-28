@@ -1,9 +1,17 @@
-"""Offline test — describe_theme_palette against real deployed themes.
+"""Offline test: describe_theme_palette against the two theme shapes that matter.
 
-Both fixtures are themes that shipped to customers. They put the named
-palette at `content.variables.colors` and carry no `content.colors` key,
-so a regression back to the old `content.colors` path makes `colors` null
-and this test fails.
+Both fixtures are SYNTHETIC. They were generated from two themes that really
+did ship to customers, keeping the structure key for key and replacing every
+concrete colour, so what is pinned here is the shape rather than anybody's
+brand. The customer originals are not in this repository.
+
+They put the named palette at `content.variables.colors` and carry no
+`content.colors` key, so a regression back to the old `content.colors` path
+makes `colors` null and this test fails.
+
+The two shapes are the point. One carries the `symphony` chatbot layer and six
+palettes; the other carries neither, which is why THEMES.md's claim that every
+theme includes four KPI palettes is wrong.
 
 Run via:
   .venv/bin/python -m tests.test_theme_palette
@@ -20,13 +28,15 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 # Spot-check values read straight out of the fixture files. If the tool
 # starts reading a different path these stop matching.
-DEPLOYED = {
-    "deployed-theme-b.json": {
-        "brandColor": "#084A8A",
+FIXTURES_UNDER_TEST = {
+    "theme-no-symphony-one-palette.json": {
+        "brandColor": "#B25F33",
+        "symphony": False,
         "palettes": ["DefaultSequential"],
     },
-    "deployed-theme-a.json": {
-        "brandColor": "#E00016",
+    "theme-with-symphony-six-palettes.json": {
+        "brandColor": "#3051A8",
+        "symphony": True,
         "palettes": [
             "ComboSequential",
             "DefaultSequential",
@@ -79,8 +89,17 @@ async def check(filename: str, expected: dict) -> list[str]:
     if not out.get("charts"):
         failures.append(f"{filename}: charts is empty")
 
+    # The symphony layer is present in one shape and absent in the other. A
+    # fixture that lost it would silently stop covering the chatbot-theming
+    # case, and nothing else in this file would notice.
+    if ("symphony" in theme["content"]) != expected["symphony"]:
+        failures.append(
+            f"{filename}: symphony layer present={'symphony' in theme['content']}, "
+            f"expected {expected['symphony']}"
+        )
+
     # Not read by the tool, but the reason THEMES.md's "every theme must
-    # include four KPI palettes" is wrong: deployed theme B ships one and is live.
+    # include four KPI palettes" is wrong: a real deployed theme shipped one.
     got = sorted(theme["content"]["variables"]["palettes"])
     if got != sorted(expected["palettes"]):
         failures.append(f"{filename}: palettes {got}, expected {expected['palettes']}")
@@ -90,13 +109,13 @@ async def check(filename: str, expected: dict) -> list[str]:
 
 async def main() -> None:
     failures = []
-    for filename, expected in DEPLOYED.items():
+    for filename, expected in FIXTURES_UNDER_TEST.items():
         failures += await check(filename, expected)
     for f in failures:
         print(f"FAIL  {f}")
     if failures:
         sys.exit(1)
-    print(f"ok — {len(DEPLOYED)} deployed themes resolve a named palette")
+    print(f"ok: {len(FIXTURES_UNDER_TEST)} theme shapes resolve a named palette")
 
 
 if __name__ == "__main__":

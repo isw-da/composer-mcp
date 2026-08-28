@@ -53,7 +53,8 @@ that is never published. A skip is always named and counted, never silent.
 
 Customer names, deployed customer artefacts, NDA-tagged material, and anything derived from
 unreleased internal roadmap. Where a real customer theme or dashboard is used as evidence it
-appears as "deployed theme A", and the identifying copy stays in a private working tree.
+appears as "deployed theme A", and the file itself stays in a private working tree. The
+fixtures in `tests/fixtures/` are synthetic equivalents, not the customer files.
 
 If you spot something that should not be public, say so and it comes out the same day.
 

@@ -1,0 +1,38 @@
+NOTICE
+======
+
+This repository mixes material with two different owners, which is why it
+carries a NOTICE rather than a conventional open-source licence. Applying MIT
+or Apache here would purport to grant rights over documentation that is not
+mine to grant.
+
+Original work
+-------------
+The MCP server, its tools and guards, the reference documents, the tests and
+the verification gates were written by Amin Hasan as insightsoftware work.
+Colleagues are welcome to clone, fork, pin and open issues.
+
+insightsoftware material
+------------------------
+Logi Composer, Logi Report, Simba Intelligence and Dundas are insightsoftware
+products. Facts, API shapes, endpoint behaviour and error semantics recorded
+here are derived from insightsoftware's own documentation and from running
+instances. That underlying documentation remains insightsoftware's and is not
+relicensed by anything in this repository.
+
+Attribution
+-----------
+Several reference documents were built from material shared by Peter Armstrong
+(insightsoftware). Each one names him, the date and the source file in its own
+header rather than in a blanket credit here. Those documents are:
+CHATBOT_EVENTS.md, CHATBOT_THEMING.md, CUSTOM_METRICS.md, DISCLOSURE.md,
+EMBEDDING_API.md and VISUAL_TYPES.md.
+
+Not here
+--------
+No customer artefact ships in this repository. The theme fixtures under
+tests/fixtures/ are synthetic: generated from two real deployed themes with the
+structure preserved and every concrete colour replaced. The originals are held
+in an internal working copy and are not published.
+
+Contact a@hasan.co if something here should not be public.
