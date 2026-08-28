@@ -7,7 +7,8 @@
 set -u
 DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$DIR/.." && pwd)"
-FAILS=0; CHECKS=0; SKIPPED=0; SKIP_NAMES=""
+FAILS=0; CHECKS=0; SKIPPED=0; SKIP_NAMES=""; SRC_SKIPPED=0
+SOURCE_ROOT="$HOME/logi-composer/peter-kb"
 fail(){ echo "  FAIL: $1"; FAILS=$((FAILS+1)); }
 
 while IFS=$'\t' read -r cap target marker source; do
@@ -30,8 +31,17 @@ while IFS=$'\t' read -r cap target marker source; do
   if ! grep -qi -- "$marker" "$ROOT/$target"; then
     fail "$cap: $target exists but has no '$marker'"
   fi
-  CHECKS=$((CHECKS+1))
-  [ -f "$source" ] || fail "$cap: source citation does not resolve: $source"
+  # The source citation is an absolute path into a working copy of Peter's
+  # bundle. It proves the claim is traceable, which is worth checking on the
+  # machine that has it, and is impossible anywhere else. Same treatment as
+  # the internal-only rows: explicitly not applicable, named and counted,
+  # never a silent skip. If the root IS present, a missing file still fails.
+  if [ -d "$SOURCE_ROOT" ]; then
+    CHECKS=$((CHECKS+1))
+    [ -f "$source" ] || fail "$cap: source citation does not resolve: $source"
+  else
+    SRC_SKIPPED=$((SRC_SKIPPED+1))
+  fi
 done < "$DIR/parity.tsv"
 
 # house style, same rule the rest of the workspace enforces
@@ -45,6 +55,13 @@ for f in "$ROOT"/*.md; do
 done
 
 echo ""
+if [ "$SRC_SKIPPED" -gt 0 ]; then
+  echo "SOURCE CITATIONS NOT CHECKED ($SRC_SKIPPED): $SOURCE_ROOT is not present."
+  echo "  Those citations point into a private working copy and can only be"
+  echo "  resolved on a machine that has it. The claims they support are still"
+  echo "  checked above; only their provenance is unverifiable here."
+  echo ""
+fi
 if [ "$SKIPPED" -gt 0 ]; then
   echo "NOT APPLICABLE in this checkout ($SKIPPED):$SKIP_NAMES"
   echo "  Those capabilities live in _internal-only/, which is gitignored and never"
@@ -52,4 +69,4 @@ if [ "$SKIPPED" -gt 0 ]; then
   echo ""
 fi
 if [ "$FAILS" -gt 0 ]; then echo "PARITY FAILED: $FAILS of $CHECKS checks"; exit 1; fi
-echo "PARITY OK: $CHECKS checks run, $SKIPPED not applicable here"; exit 0
+echo "PARITY OK: $CHECKS checks run, $SKIPPED not applicable, $SRC_SKIPPED citations unresolvable here"; exit 0
