@@ -340,8 +340,19 @@ ships this proxy. The partner shell calls it on persona switch.
   to manage them with PUT-merge semantics rather than reconstructing the
   full record yourself. A subscription created without recipients still
   fires its schedule and produces a PDF — the PDF just goes nowhere.
-* `set_report_enabled(False)` pauses a subscription without losing its
-  recipient list. Prefer this to `delete` when iterating on schedules.
+* There is no way to pause a subscription. An earlier version of this note
+  said `set_report_enabled(False)` pauses one without losing its recipient
+  list, and recommended it over `delete`. No such field exists: the report
+  record returned by `GET /api/dashboards/{id}/reports` has no `enabled` key,
+  and the UI's Schedule Reports dialog offers only delete, behind an "action
+  cannot be undone" confirmation. Verified against the UAT tenant on
+  2026-09-20 while removing a live subscription.
+  To stop a subscription you therefore either delete it, or remove its
+  recipients and accept that the schedule keeps firing and rendering a PDF
+  that goes nowhere. Export the record before deleting, since the dialog
+  gives you nothing back: `GET /api/dashboards/{id}/reports` returns the
+  whole definition, and `POST` to the same path recreates it from that
+  object with its `id` removed.
 
 ## Embed Manager (native DOM, no iframe)
 
