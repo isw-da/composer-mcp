@@ -159,6 +159,14 @@ COMPOSER_PASSWORD='<your-composer-admin-password>' \
 the SI / Symphony bundled deployment, set `COMPOSER_CONTEXT_PATH=/discovery`
 and use one of the bundled-Symphony auth modes below.
 
+> **26.3:** `/discovery` stops being the bundled default. Simba Agentic
+> Intelligence ships inside the Composer Helm chart (PY-693) and moves to
+> `{composer-context}/intelligence`, default `/composer/intelligence`
+> (Confluence page 18711380170). The context path stays configurable, so
+> `/discovery` survives only where an admin sets it. Every `/discovery/...`
+> literal elsewhere in this README records the 26.2 default rather than a
+> constant. See `SI_26.3_NOTES.md`.
+
 ## Auth modes
 
 Three flavours, in order of preference for unattended scripting.

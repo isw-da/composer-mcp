@@ -117,7 +117,10 @@ explore and save it. The flow:
    visual exists in the gallery, then resolve its id by name via
    `GET <server>/discovery/api/visuals?name=<name>&size=1`. Use the
    `/discovery/api` prefix; the bare `/api` path is CORS-blocked from the browser
-   (see `WRITEBACK_ODATA.md`).
+   (see `WRITEBACK_ODATA.md`). **26.3:** the CORS reasoning holds, the literal
+   prefix does not. `/discovery` stops being the default context path
+   (Confluence page 18711380170); use whatever `{composer-context}` the
+   deployment is configured with. See `SI_26.3_NOTES.md`.
 3. Render `createComponent('visual-builder', { visualId, ... })` into a
    full-screen overlay.
 

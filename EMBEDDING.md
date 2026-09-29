@@ -77,6 +77,11 @@ diagnostics rather than making you guess.
       │    (see "Required shell CSS" below)
 ```
 
+> **26.3:** step 2's `/discovery` prefix is the 26.2 bundled default, not a
+> constant. From 26.3 the script path becomes `{composer-context}/embed/embed.js`
+> (Confluence page 18711380170). Read the context path from configuration
+> rather than hardcoding it. See `SI_26.3_NOTES.md`.
+
 ## Required prerequisites
 
 1. A **Trusted Access client** registered on the Composer instance, scoped

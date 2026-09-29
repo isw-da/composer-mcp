@@ -17,6 +17,11 @@ person doesn't burn the same hour.
   session has expired. Please refresh the page". It is not a session expiry,
   it is the CSRF gate.
 * `COMPOSER_BEARER` is a third option, takes precedence over the cookie.
+* **26.3:** the `/discovery` context path above is the 26.2 bundled default,
+  not a constant. From 26.3 the default becomes `{composer-context}`, with
+  Simba Agentic Intelligence under `{composer-context}/intelligence`
+  (Confluence page 18711380170). The auth behaviour described here is
+  unchanged by that move; only the prefix is. See `SI_26.3_NOTES.md`.
 
 ## Trusted Access
 
