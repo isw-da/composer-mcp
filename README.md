@@ -159,6 +159,11 @@ COMPOSER_PASSWORD='<your-composer-admin-password>' \
 the SI / Symphony bundled deployment, set `COMPOSER_CONTEXT_PATH=/discovery`
 and use one of the bundled-Symphony auth modes below.
 
+From Composer 26.3 the Helm chart (`composer/composer` 1.22.0) sets
+`zoomdataWeb.contextPath` to `/composer` by default, and SI is an opt-in block in
+that same chart. Match `COMPOSER_CONTEXT_PATH` to the install and check it with
+`GET <contextPath>/api/version`. Details and sources in `COMPOSER_26.3_NOTES.md`.
+
 ## Auth modes
 
 Three flavours, in order of preference for unattended scripting.

@@ -328,10 +328,12 @@ directly against a live bundled 26.2.0 instance:
 | `POST /visuals/{id}/data` (`composer_test_dashboard_render`) | 404 "No static resource" | The per-widget render probe hits a route that does not exist on 26.2.0, so the tool marks every widget failed. The wrapper now detects the all-404 pattern and returns `endpointWarning` telling you the result is UNKNOWN, not failed. Fetch visual data via `POST /export/visualdata/{id}` or query the source directly to actually verify a render. |
 | `/managed/*` (blocked by guard) | 404 (MDR module not deployed) | `/managed` is the MDR surface; it is absent from VDD-only deployments and from the discovery OpenAPI. The client guard refuses it regardless. NOTE: the guard previously only matched `/managed`, but `request()` normalises paths to `/api/managed`, so the guard never fired on real calls; fixed 2026-08-28 to match `/api/managed`. |
 
-Currency: newest published Composer image is **26.2.2** (Docker Hub
-`insightsoftware/zoomdata`, 2026-08-20); newest SI is **26.2.1**. The REST path
-set is unchanged across 26.2.0/26.2.1, so these are patch releases at the API
-level — coverage numbers hold, but docs that pin 26.2.1 as "newest" are stale.
+Currency (updated 2 October 2026): newest published Composer is **26.3.0**
+(Docker Hub `insightsoftware/zoomdata:26.3.0`, 2026-09-29; Helm chart
+`composer/composer` 1.22.0), and from 26.3 SI ships inside that chart (see
+`COMPOSER_26.3_NOTES.md`). The table above was probed on 26.2.0 and has not been
+re-run on 26.3. The REST path set was unchanged across 26.2.0/26.2.1; the 26.2
+line ended at Composer 26.2.2 (2026-08-20) and SI 26.2.1.
 
 ## Where the workarounds live
 

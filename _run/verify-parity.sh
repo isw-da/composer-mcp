@@ -47,7 +47,7 @@ done < "$DIR/parity.tsv"
 # house style, same rule the rest of the workspace enforces
 for f in "$ROOT"/*.md; do
   case "$(basename "$f")" in
-    EMBEDDING_API.md|CHATBOT_EVENTS.md|CHATBOT_THEMING.md|VISUAL_TYPES.md|CUSTOM_METRICS.md|SECURITY_ANSWERS.md|DISCLOSURE.md|BEYOND_PARITY.md) ;;
+    EMBEDDING_API.md|CHATBOT_EVENTS.md|CHATBOT_THEMING.md|VISUAL_TYPES.md|CUSTOM_METRICS.md|SECURITY_ANSWERS.md|DISCLOSURE.md|BEYOND_PARITY.md|COMPOSER_26.3_NOTES.md|CLAUDE.md) ;;
     *) continue;;
   esac
   CHECKS=$((CHECKS+1))
