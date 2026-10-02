@@ -47,8 +47,10 @@ Chart 1.22.0 carries Simba Agentic Intelligence as a sub-component. The `values.
 described as "AI assistant features migrated in from the standalone Simba Intelligence chart"
 and is **off by default** (`simbaIntelligence.enabled: false`). Keys in the public chart:
 
-- `simbaIntelligence.composerPublicUrl`. The chart only warns when it is empty; set it anyway,
-  because SI builds browser redirects from it.
+- `simbaIntelligence.composerPublicUrl`: the browser-reachable Composer URL. Left empty (the
+  chart's recommended default), it is derived as `https://` plus the first ingress or Gateway API
+  hostname plus `zoomdataWeb.contextPath`. With no hostname and no override the install still
+  succeeds, `NOTES.txt` prints a warning, and SI fails later at runtime, so set one or the other.
 - `.website`: the SI REST API, port 5050.
 - `.mcp`: SI's own MCP server, opt-in (`.mcp.enabled`, `.mcp.baseUrl`), port 8001, always https.
 - `.redis`, `.celery.worker`, `.celery.beat`.
